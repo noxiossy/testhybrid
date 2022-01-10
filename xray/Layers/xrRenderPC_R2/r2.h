@@ -86,6 +86,7 @@ public:
 		u32		ic_total,	ic_culled;
 	}			stats;
 public:
+	bool is_sun();
 	// Sector detection and visibility
 	CSector*													pLastSector;
 	Fvector														vLastCameraPos;
@@ -306,7 +307,7 @@ public:
 	virtual void					rmNear						();
 	virtual void					rmFar						();
 	virtual void					rmNormal					();
-
+    virtual u32 					active_phase				() {return phase;}; //Swartz: actor shadow
 	// Constructor/destructor/loader
 	CRender							();
 	virtual ~CRender				();

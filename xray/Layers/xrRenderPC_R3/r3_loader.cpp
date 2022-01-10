@@ -191,13 +191,15 @@ void CRender::level_Unload()
 	//*** Shaders
 	Shaders.clear_and_free		();
 
-/*
-	Models->ClearPool( true );
-	Visuals.clear_and_free();
-	dxRenderDeviceRender::Instance().Resources->Dump(false);
-	static int unload_counter = 0;
-	Msg("The Level Unloaded.======================== %d", ++unload_counter);
-*/
+	if (ps_clear_models_on_unload == 1)
+	{
+		Models->ClearPool(true);
+		Visuals.clear_and_free();
+		dxRenderDeviceRender::Instance().Resources->Dump(false);
+		//static int unload_counter = 0;
+		//Msg("The Level Unloaded.======================== %d", ++unload_counter);
+	}
+
 	b_loaded					= FALSE;
 }
 
@@ -219,12 +221,12 @@ void CRender::LoadBuffers		(CStreamReader *base_fs,	BOOL _alternative)
 		u32 count				= fs->r_u32();
 		_DC.resize				(count);
 		_VB.resize				(count);
+		u32					buffer_size = (MAXD3DDECLLENGTH+1)*sizeof(D3DVERTEXELEMENT9);
+		D3DVERTEXELEMENT9	*dcl = (D3DVERTEXELEMENT9*)_alloca(buffer_size);
 		for (u32 i=0; i<count; i++)
 		{
 			// decl
 //			D3DVERTEXELEMENT9*	dcl		= (D3DVERTEXELEMENT9*) fs().pointer();
-			u32					buffer_size = (MAXD3DDECLLENGTH+1)*sizeof(D3DVERTEXELEMENT9);
-			D3DVERTEXELEMENT9	*dcl = (D3DVERTEXELEMENT9*)_alloca(buffer_size);
 			fs->r				(dcl,buffer_size);
 			fs->advance			(-(int)buffer_size);
 
@@ -352,7 +354,7 @@ void CRender::LoadSectors(IReader* fs)
 	{
 		CDB::Collector	CL;
 		fs->find_chunk	(fsL_PORTALS);
-		for (i=0; i<count; i++)
+		for (u32 i=0; i<count; i++)
 		{
 			b_portal	P;
 			fs->r		(&P,sizeof(P));

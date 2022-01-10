@@ -87,11 +87,76 @@ CDetailManager::CDetailManager	()
 	m_time_rot_2 = 0;
 	m_time_pos	= 0;
 	m_global_time_old = 0;
+
+#ifdef DETAIL_RADIUS
+    // KD: variable detail radius
+    dm_size = dm_current_size;
+    dm_cache_line = dm_current_cache_line;
+    dm_cache1_line = dm_current_cache1_line;
+    dm_cache_size = dm_current_cache_size;
+    dm_fade = dm_current_fade;
+    ps_r__Detail_density = ps_current_detail_density;
+    cache_level1 = (CacheSlot1**) Memory.mem_alloc(dm_cache1_line*sizeof(CacheSlot1*)
+#ifdef USE_MEMORY_MONITOR
+        , "CDetailManager::cache_level1"
+#endif
+        );
+    for (u32 i = 0; i < dm_cache1_line; ++i)
+    {
+        cache_level1[i] = (CacheSlot1*) Memory.mem_alloc(dm_cache1_line*sizeof(CacheSlot1)
+#ifdef USE_MEMORY_MONITOR
+            , "CDetailManager::cache_level1 " + i
+#endif
+            );
+        for (u32 j = 0; j < dm_cache1_line; ++j)
+            new (&(cache_level1[i][j])) CacheSlot1();
+    }
+
+    cache = (Slot***) Memory.mem_alloc(dm_cache_line*sizeof(Slot**)
+#ifdef USE_MEMORY_MONITOR
+        , "CDetailManager::cache"
+#endif
+        );
+    for (u32 i = 0; i < dm_cache_line; ++i)
+        cache[i] = (Slot**) Memory.mem_alloc(dm_cache_line*sizeof(Slot*)
+#ifdef USE_MEMORY_MONITOR
+        , "CDetailManager::cache " + i
+#endif		
+        );
+
+    cache_pool = (Slot *) Memory.mem_alloc(dm_cache_size*sizeof(Slot)
+#ifdef USE_MEMORY_MONITOR
+        , "CDetailManager::cache_pool"
+#endif
+        );
+    for (u32 i = 0; i < dm_cache_size; ++i)
+        new (&(cache_pool[i])) Slot();
+    /*
+    CacheSlot1 						cache_level1[dm_cache1_line][dm_cache1_line];
+    Slot*							cache		[dm_cache_line][dm_cache_line];	// grid-cache itself
+    Slot							cache_pool	[dm_cache_size];				// just memory for slots */
+#endif
 }
 
 CDetailManager::~CDetailManager	()
 {
+#ifdef DETAIL_RADIUS
+    for (u32 i = 0; i < dm_cache_size; ++i)
+        cache_pool[i].~Slot();
+    Memory.mem_free(cache_pool);
 
+    for (u32 i = 0; i < dm_cache_line; ++i)
+        Memory.mem_free(cache[i]);
+    Memory.mem_free(cache);
+
+    for (u32 i = 0; i < dm_cache1_line; ++i)
+    {
+        for (u32 j = 0; j < dm_cache1_line; ++j)
+            cache_level1[i][j].~CacheSlot1();
+        Memory.mem_free(cache_level1[i]);
+    }
+    Memory.mem_free(cache_level1);
+#endif
 }
 /*
 */
@@ -204,8 +269,8 @@ void CDetailManager::UpdateVisibleM()
 	// Initialize 'vis' and 'cache'
 	// Collect objects for rendering
 	RDEVICE.Statistic->RenderDUMP_DT_VIS.Begin	();
-	for (int _mz=0; _mz<dm_cache1_line; _mz++){
-		for (int _mx=0; _mx<dm_cache1_line; _mx++){
+	for (u32 _mz=0; _mz<dm_cache1_line; _mz++){
+		for (u32 _mx=0; _mx<dm_cache1_line; _mx++){
 			CacheSlot1& MS		= cache_level1[_mz][_mx];
 			if (MS.empty)
 			{
@@ -221,7 +286,7 @@ void CDetailManager::UpdateVisibleM()
 			
 			u32 dwCC = dm_cache1_count*dm_cache1_count;
 
-			for (int _i=0; _i < dwCC ; _i++){
+			for (u32 _i=0; _i < dwCC ; _i++){
 				Slot*	PS		= *MS.slots[_i];
 				Slot& 	S 		= *PS;
 

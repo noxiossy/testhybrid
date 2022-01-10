@@ -35,6 +35,13 @@ public:
 	virtual void					set_color			(float r, float g, float b)	{ }
 };
 
+bool CRender::is_sun()
+{
+	if (o.sunstatic) return FALSE;
+	Fcolor sun_color = ((light*)Lights.sun_adapted._get())->color;
+	return (ps_r2_ls_flags.test(R2FLAG_SUN) && (u_diffuse2s(sun_color.r, sun_color.g, sun_color.b)>EPS));
+}
+
 float		r_dtex_range		= 50.f;
 //////////////////////////////////////////////////////////////////////////
 ShaderElement*			CRender::rimp_select_sh_dynamic	(dxRender_Visual	*pVisual, float cdist_sq)
@@ -94,6 +101,18 @@ static class cl_water_intensity : public R_constant_setup
 		RCache.set_c	(C, fValue, fValue, fValue, 0);
 	}
 }	binder_water_intensity;
+
+#ifdef TREE_WIND_EFFECT
+static class cl_tree_amplitude_intensity : public R_constant_setup
+{
+    virtual void setup(R_constant* C)
+    {
+        CEnvDescriptor&	E = *g_pGamePersistent->Environment().CurrentEnv;
+        float fValue = E.m_fTreeAmplitudeIntensity;
+        RCache.set_c(C, fValue, fValue, fValue, 0);
+    }
+} binder_tree_amplitude_intensity;
+#endif
 
 static class cl_sun_shafts_intensity : public R_constant_setup		
 {	
@@ -454,6 +473,14 @@ void CRender::reset_begin()
 		Lights_LastFrame.clear	();
 	}
 
+    //AVO: let's reload details while changed details options on vid_restart
+    if (b_loaded && ((dm_current_size != dm_size) || (ps_r__Detail_density != ps_current_detail_density)))
+    {
+        Details->Unload();
+        xr_delete(Details);
+    }
+    //-AVO
+
 	xr_delete					(Target);
 	HWOCC.occq_destroy			();
 	//_RELEASE					(q_sync_point[1]);
@@ -479,6 +506,14 @@ void CRender::reset_end()
 	HWOCC.occq_create			(occq_size);
 
 	Target						=	xr_new<CRenderTarget>	();
+
+    //AVO: let's reload details while changed details options on vid_restart
+    if (b_loaded && ((dm_current_size != dm_size) || (ps_r__Detail_density != ps_current_detail_density)))
+    {
+        Details = xr_new<CDetailManager>();
+        Details->Load();
+    }
+    //-AVO
 
 	xrRender_apply_tf			();
 	FluidManager.SetScreenSize(Device.dwWidth, Device.dwHeight);
@@ -1316,7 +1351,7 @@ HRESULT	CRender::shader_compile			(
 	   defines[def_it].Definition	=	"1";
 	   def_it++;
    }
-   sh_name[len]='0'+0*char(o.dx10_sm4_1); ++len;
+   sh_name[len]='0'+char(o.dx10_sm4_1); ++len;
 
    R_ASSERT						( HW.FeatureLevel>=D3D_FEATURE_LEVEL_11_0 );
    if( HW.FeatureLevel>=D3D_FEATURE_LEVEL_11_0 )

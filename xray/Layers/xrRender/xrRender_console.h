@@ -3,6 +3,10 @@
 #pragma once
 
 // Common
+//Alundaio
+extern ECORE_API	BOOL 		ps_clear_models_on_unload;
+//-Alundaio
+
 extern ECORE_API	u32			ps_r_sun_shafts;	//=	0;
 extern ECORE_API	xr_token	qsun_shafts_token[];
 
@@ -194,6 +198,16 @@ enum
 	R2FLAGEXT_SUN_ZCULLING			= (1<<8),
 	R2FLAGEXT_SUN_OLD				= (1<<9),
 };
+
+
+//Swartz: actor shadow
+extern ECORE_API Flags32 ps_actor_shadow_flags; 
+
+enum
+{
+RFLAG_ACTOR_SHADOW = (1<<0),
+};
+//-Swartz
 
 extern void						xrRender_initconsole	();
 extern BOOL						xrRender_test_hw		();
