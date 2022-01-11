@@ -40,9 +40,7 @@ extern bool shared_str_initialized;
 
 #ifdef USE_BUG_TRAP
 #	include "../../3rd party/bugtrap/bugtrap/bugtrap.h"						// for BugTrap functionality
-	#ifndef __BORLANDC__
-		# pragma comment(lib,"BugTrap.lib") // Link to ANSI DLL
-	#else
+    #ifdef __BORLANDC__
         #	pragma comment(lib,"BugTrapB.lib")		// Link to ANSI DLL
     #endif
 #endif // USE_BUG_TRAP
@@ -675,7 +673,6 @@ void format_message	(LPSTR buffer, const u32 &buffer_size)
 
 #ifndef _EDITOR
     #include <errorrep.h>
-#pragma comment( lib, "faultrep.lib" )
 #endif
 
 #ifdef NO_BUG_TRAP
@@ -839,9 +836,6 @@ LONG WINAPI UnhandledFilter(_EXCEPTION_POINTERS* pExceptionInfo)
 //		::SetUnhandledExceptionFilter	(UnhandledFilter);	// exception handler to all "unhandled" exceptions
     }
 #else
-typedef int(__cdecl* _PNH)(size_t);
-_CRTIMP int __cdecl _set_new_mode(int);
-_CRTIMP _PNH __cdecl _set_new_handler(_PNH);
 
 #ifdef LEGACY_CODE
 #ifndef USE_BUG_TRAP
