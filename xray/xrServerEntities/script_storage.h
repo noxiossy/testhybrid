@@ -29,6 +29,15 @@ class CScriptThread;
 #	endif // #ifndef NDEBUG
 #endif // #ifdef XRGAME_EXPORTS
 
+//AVO: allow LUA debug prints (i.e.: ai().script_engine().script_log(ScriptStorage::eLuaMessageTypeError, "CWeapon : cannot access class member Weapon_IsScopeAttached!");)
+#include "..\build_config_defines.h"
+#ifndef DEBUG
+#   ifdef LUA_DEBUG_PRINT
+#       define PRINT_CALL_STACK
+#   endif
+#endif //-!DEBUG
+//-AVO
+
 using namespace ScriptStorage;
 
 class CScriptStorage {
@@ -42,10 +51,15 @@ public:
 	bool						m_stack_is_ready	;
 #endif // #ifdef DEBUG
 
-#ifdef PRINT_CALL_STACK
+#ifdef LUA_DEBUG_PRINT//PRINT_CALL_STACK
 protected:
 	CMemoryWriter				m_output;
-#endif // #ifdef PRINT_CALL_STACK
+#else
+#   ifdef DEBUG
+protected:
+    CMemoryWriter m_output;
+#   endif //-DEBUG
+#endif //-LUA_DEBUG_PRINT PRINT_CALL_STACK
 
 protected:
 	static	int					vscript_log					(ScriptStorage::ELuaMessageType tLuaMessageType, LPCSTR caFormat, va_list marker);
@@ -54,9 +68,12 @@ protected:
 			void				reinit						();
 
 public:
-#ifdef PRINT_CALL_STACK
+//#ifdef PRINT_CALL_STACK
 			void				print_stack					();
-#endif // #ifdef PRINT_CALL_STACK
+    //AVO: added to stop duplicate stack output prints in log
+    static int __cdecl script_log_no_stack(ScriptStorage::ELuaMessageType tLuaMessageType, LPCSTR caFormat, ...);
+    //-AVO
+//#endif //-PRINT_CALL_STACK
 
 public:
 								CScriptStorage				();
@@ -76,7 +93,7 @@ public:
 	static	void				print_error					(lua_State *L,		int		iErrorCode);
 	virtual	void				on_error					(lua_State *L) = 0;
 
-#ifdef DEBUG
+#ifdef LUA_DEBUG_PRINT //DEBUG
 public:
 			void				flush_log					();
 #endif // DEBUG

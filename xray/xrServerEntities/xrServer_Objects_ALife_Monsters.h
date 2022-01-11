@@ -46,7 +46,7 @@ SERVER_ENTITY_DECLARE_BEGIN0(CSE_ALifeTraderAbstract)
 	CHARACTER_REPUTATION_VALUE		m_reputation;
 	CHARACTER_RANK_VALUE			m_rank;
 	xr_string						m_character_name;
-	
+	shared_str						m_icon_name;
 	bool							m_deadbody_can_take;
 	bool							m_deadbody_closed;
 
@@ -220,8 +220,8 @@ public:
 	IC		float					get_health				() const								{ return fHealth;}
 	IC		ALife::_OBJECT_ID		get_killer_id			() const								{ return m_killer_id; }
 
-	void							set_health				(float const health_value);
-	void							set_killer_id			(ALife::_OBJECT_ID const killer_id);
+	IC		void					set_health				(float const health_value);
+	IC		void					set_killer_id			(ALife::_OBJECT_ID const killer_id);
 
 	IC		bool					g_Alive					() const								{ return (get_health() > 0.f);}
 	virtual bool					used_ai_locations		() const;

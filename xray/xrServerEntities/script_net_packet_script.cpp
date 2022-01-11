@@ -33,6 +33,12 @@ bool r_bool(NET_Packet *self)
 	return			(!!self->r_u8());
 }
 
+//Alundaio: Fix issue with using r_begin
+u32 r_begin(NET_Packet *self,u16 type)
+{
+	return (self->r_begin(type));
+}
+
 ClientID r_clientID(NET_Packet *self)
 {
 	ClientID		clientID;
@@ -85,7 +91,7 @@ void CScriptNetPacket::script_register(lua_State *L)
 			.def("w_chunk_close8",	&NET_Packet::w_chunk_close8	)
 			.def("w_chunk_open16",	&NET_Packet::w_chunk_open16	)
 			.def("w_chunk_close16",	&NET_Packet::w_chunk_close16)
-			.def("r_begin",			&NET_Packet::r_begin		)
+			.def("r_begin",			&r_begin					)
 //			.def("r",				&NET_Packet::r				)
 			.def("r_seek",			&NET_Packet::r_seek			)
 			.def("r_tell",			&NET_Packet::r_tell			)

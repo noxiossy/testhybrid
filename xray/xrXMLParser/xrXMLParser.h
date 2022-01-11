@@ -9,9 +9,10 @@
 	#define XRXMLPARSER_API __declspec(dllimport)
 #endif
 
-const LPCSTR CONFIG_PATH			= "$game_config$";
-const LPCSTR UI_PATH				= "ui";
-
+//const LPCSTR CONFIG_PATH			= "$game_config$";
+//const LPCSTR UI_PATH				= "ui";
+#define _game_config_ "$game_config$"
+const LPCSTR CONFIG_PATH = _game_config_;
 
 #include "tinyxml.h"
 

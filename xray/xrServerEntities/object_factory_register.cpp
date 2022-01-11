@@ -135,7 +135,7 @@
 #	include "torridZone.h"
 #	include "ZoneVisual.h"
 #	include "hairszone.h"
-//. #	include "amebazone.h"
+#	include "amebazone.h"
 #	include "nogravityzone.h"
 #	include "simpledetector.h"
 #	include "elitedetector.h"
@@ -178,6 +178,8 @@
 #	include "actor_mp_server.h"
 #	include "actor_mp_client.h"
 #	include "smart_cover_object.h"
+
+#include "..\xrGame\HolderEntityObject.h"
 #endif // NO_XR_GAME
 
 #ifndef NO_XR_GAME
@@ -382,7 +384,7 @@ void CObjectFactory::register_classes	()
 	ADD(CTeamBaseZone			,CSE_ALifeTeamBaseZone			,CLSID_Z_TEAM_BASE				,"team_base_zone");
 	ADD(CTorridZone				,CSE_ALifeTorridZone			,CLSID_Z_TORRID					,"torrid_zone");
 	ADD(CSpaceRestrictor		,CSE_ALifeSpaceRestrictor		,CLSID_SPACE_RESTRICTOR			,"space_restrictor");
-//.	ADD(CAmebaZone				,CSE_ALifeZoneVisual			,CLSID_Z_AMEBA					,"ameba_zone");
+	ADD(CAmebaZone				,CSE_ALifeZoneVisual			,CLSID_Z_AMEBA					,"ameba_zone");
 	ADD(CNoGravityZone			,CSE_ALifeAnomalousZone			,CLSID_Z_NOGRAVITY				,"nogravity_zone");
 	ADD(CZoneCampfire			,CSE_ALifeAnomalousZone			,CLSID_Z_CAMPFIRE				,"zone_campfire");
 	// Detectors
@@ -409,7 +411,8 @@ void CObjectFactory::register_classes	()
 	ADD(CClimableObject			,CSE_ALifeObjectClimable		,CLSID_OBJECT_CLIMABLE			,"obj_climable");
 	ADD(CPhysicsSkeletonObject	,CSE_ALifePHSkeletonObject		,CLSID_PH_SKELETON_OBJECT		,"obj_phskeleton");
 	ADD(CDestroyablePhysicsObject,CSE_ALifeObjectPhysic			,CLSID_PHYSICS_DESTROYABLE		,"obj_phys_destroyable");
-
+	ADD(CHolderEntityObject		,CSE_ALifeDynamicObjectVisual	,CLSID_OBJECT_HOLDER_ENT		,"obj_holder_ent");
+	
 	ADD(CInventoryBox			,CSE_ALifeInventoryBox			,CLSID_INVENTORY_BOX			,"inventory_box");
 #ifndef NO_SINGLE
 	ADD(smart_cover::object		,CSE_SmartCover					,TEXT2CLSID("SMRTCOVR")			,"smart_cover");
@@ -449,6 +452,8 @@ void CObjectFactory::register_classes	()
 	ADD(CMosquitoBald			,CSE_ALifeAnomalousZone			,TEXT2CLSID("ZS_MBALD")			,"zone_mbald_s");
 	ADD(CMincer					,CSE_ALifeAnomalousZone			,TEXT2CLSID("ZS_GALAN")			,"zone_galant_s");
 	ADD(CMincer					,CSE_ALifeAnomalousZone			,TEXT2CLSID("ZS_MINCE")			,"zone_mincer_s");
+	ADD(CAmebaZone				,CSE_ALifeZoneVisual			,TEXT2CLSID("ZS_AMEBA")			,"zone_ameba_s");
+	ADD(CNoGravityZone			,CSE_ALifeAnomalousZone			,TEXT2CLSID("ZS_NGRAV")			,"zone_nograv_s");
 	ADD(CSpaceRestrictor		,CSE_ALifeSpaceRestrictor		,TEXT2CLSID("SPC_RS_S")			,"script_restr");
 #endif // NO_XR_GAME
 }

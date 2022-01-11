@@ -304,6 +304,10 @@ void CScriptStorage::reinit	()
 
 #ifdef DEBUG
 	luajit::open_lib	(lua(),	LUA_DBLIBNAME,		luaopen_debug);
+#else //!DEBUG
+
+    if (strstr(Core.Params, "-dbg"))
+        luajit::open_lib(lua(), LUA_DBLIBNAME, luaopen_debug);
 #endif // #ifdef DEBUG
 
 	if (!strstr(Core.Params,"-nojit")) {
@@ -330,13 +334,26 @@ int CScriptStorage::vscript_log		(ScriptStorage::ELuaMessageType tLuaMessageType
 #	endif
 #endif
 
-#ifndef PRINT_CALL_STACK
-	return		(0);
-#else // #ifdef PRINT_CALL_STACK
-#	ifndef NO_XRGAME_SCRIPT_ENGINE
+//#ifndef PRINT_CALL_STACK
+    //return		(0);
+//#else //PRINT_CALL_STACK
+#   ifndef NO_XRGAME_SCRIPT_ENGINE
+    //AVO: allow LUA debug prints (i.e.: ai().script_engine().script_log(ScriptStorage::eLuaMessageTypeError, "CWeapon : cannot access class member Weapon_IsScopeAttached!");)
+#       ifndef DEBUG
+
+    if (!strstr(Core.Params, "-dbg"))
+        return(0);
+#       endif //!DEBUG
+#       ifndef LUA_DEBUG_PRINT
+#           ifdef DEBUG
+                if (!psAI_Flags.test(aiLua) && (tLuaMessageType != ScriptStorage::eLuaMessageTypeError))
+                    return(0);
+#           endif //-DEBUG
+#       else //!LUA_DEBUG_PRINT
 		if (!psAI_Flags.test(aiLua) && (tLuaMessageType != ScriptStorage::eLuaMessageTypeError))
 			return(0);
 #	endif // #ifndef NO_XRGAME_SCRIPT_ENGINE
+#endif //-NO_XRGAME_SCRIPT_ENGINE
 
 	LPCSTR		S = "", SS = "";
 	LPSTR		S1;
@@ -395,17 +412,17 @@ int CScriptStorage::vscript_log		(ScriptStorage::ELuaMessageType tLuaMessageType
 	vsprintf(S1,caFormat,marker);
 	xr_strcat	(S2,"\r\n");
 
-#ifdef DEBUG
+#ifdef LUA_DEBUG_PRINT //DEBUG
 #	ifndef ENGINE_BUILD
 	ai().script_engine().m_output.w(S2,xr_strlen(S2)*sizeof(char));
 #	endif // #ifdef ENGINE_BUILD
 #endif // #ifdef DEBUG
 
 	return	(l_iResult);
-#endif // #ifdef PRINT_CALL_STACK
+//#endif //-PRINT_CALL_STACK
 }
 
-#ifdef PRINT_CALL_STACK
+//#ifdef PRINT_CALL_STACK
 void CScriptStorage::print_stack		()
 {
 #ifdef DEBUG
@@ -420,15 +437,29 @@ void CScriptStorage::print_stack		()
 	for (int i=0; lua_getstack(L,i,&l_tDebugInfo);++i ) {
 		lua_getinfo			(L,"nSlu",&l_tDebugInfo);
 		if (!l_tDebugInfo.name)
-			script_log		(ScriptStorage::eLuaMessageTypeError,"%2d : [%s] %s(%d) : %s",i,l_tDebugInfo.what,l_tDebugInfo.short_src,l_tDebugInfo.currentline,"");
+            script_log_no_stack(ScriptStorage::eLuaMessageTypeError, "%2d : [%s] %s(%d) : %s", i, l_tDebugInfo.what, l_tDebugInfo.short_src, l_tDebugInfo.currentline, "");
+			//script_log		(ScriptStorage::eLuaMessageTypeError,"%2d : [%s] %s(%d) : %s",i,l_tDebugInfo.what,l_tDebugInfo.short_src,l_tDebugInfo.currentline,"");
 		else
 			if (!xr_strcmp(l_tDebugInfo.what,"C"))
-				script_log	(ScriptStorage::eLuaMessageTypeError,"%2d : [C  ] %s",i,l_tDebugInfo.name);
+                script_log_no_stack(ScriptStorage::eLuaMessageTypeError, "%2d : [C  ] %s", i, l_tDebugInfo.name);
+				//script_log	(ScriptStorage::eLuaMessageTypeError,"%2d : [C  ] %s",i,l_tDebugInfo.name);
 			else
-				script_log	(ScriptStorage::eLuaMessageTypeError,"%2d : [%s] %s(%d) : %s",i,l_tDebugInfo.what,l_tDebugInfo.short_src,l_tDebugInfo.currentline,l_tDebugInfo.name);
+                script_log_no_stack(ScriptStorage::eLuaMessageTypeError, "%2d : [%s] %s(%d) : %s", i, l_tDebugInfo.what, l_tDebugInfo.short_src, l_tDebugInfo.currentline, l_tDebugInfo.name);
+				//script_log	(ScriptStorage::eLuaMessageTypeError,"%2d : [%s] %s(%d) : %s",i,l_tDebugInfo.what,l_tDebugInfo.short_src,l_tDebugInfo.currentline,l_tDebugInfo.name);
 	}
 }
-#endif // #ifdef PRINT_CALL_STACK
+//#endif //-PRINT_CALL_STACK
+
+//AVO: added to stop duplicate stack output prints in log
+int __cdecl CScriptStorage::script_log_no_stack(ScriptStorage::ELuaMessageType tLuaMessageType, LPCSTR caFormat, ...)
+{
+    va_list	 marker;
+    va_start(marker, caFormat);
+    int result = vscript_log(tLuaMessageType, caFormat, marker);
+    va_end(marker);
+    return result;
+}
+//-AVO
 
 int __cdecl CScriptStorage::script_log	(ScriptStorage::ELuaMessageType tLuaMessageType, LPCSTR caFormat, ...)
 {
@@ -613,6 +644,7 @@ bool CScriptStorage::load_file_into_namespace(LPCSTR caScriptName, LPCSTR caName
 {
 	int				start = lua_gettop(lua());
 	if (!do_file(caScriptName,caNamespaceName)) {
+        Msg("! [ERROR] --- Failed to load script %s", caNamespaceName);
 		lua_settop	(lua(),start);
 		return		(false);
 	}
@@ -739,7 +771,7 @@ struct raii_guard : private boost::noncopyable {
 #ifdef DEBUG
 			static bool const break_on_assert	= !!strstr(Core.Params,"-break_on_assert");
 #else // #ifdef DEBUG
-			static bool const break_on_assert	= true;
+            static bool const break_on_assert = false; //Alundaio: Can't get a proper stack trace with this enabled
 #endif // #ifdef DEBUG
 			if ( !m_error_code  )
 				return;
@@ -823,7 +855,7 @@ void CScriptStorage::print_error(lua_State *L, int iErrorCode)
 	}
 }
 
-#ifdef DEBUG
+#ifdef LUA_DEBUG_PRINT //DEBUG
 void CScriptStorage::flush_log()
 {
 	string_path			log_file_name;

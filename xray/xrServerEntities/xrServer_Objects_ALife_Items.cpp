@@ -537,7 +537,7 @@ void CSE_ALifeItemWeapon::UPDATE_Read(NET_Packet	&tNetPacket)
 
 void CSE_ALifeItemWeapon::clone_addons(CSE_ALifeItemWeapon* parent)
 {
-	m_addon_flags = parent->m_addon_flags;
+	m_addon_flags.flags = parent->m_addon_flags.get();
 }
 
 void CSE_ALifeItemWeapon::UPDATE_Write(NET_Packet	&tNetPacket)
@@ -616,6 +616,11 @@ u16	 CSE_ALifeItemWeapon::get_ammo_total	()
 u16	 CSE_ALifeItemWeapon::get_ammo_elapsed	()
 {
 	return						((u16)a_elapsed);
+}
+
+void CSE_ALifeItemWeapon::set_ammo_elapsed(u16 count)
+{
+	a_elapsed = count;
 }
 
 u16	 CSE_ALifeItemWeapon::get_ammo_magsize	()

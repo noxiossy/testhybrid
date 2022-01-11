@@ -17,6 +17,8 @@ void LuaLog(LPCSTR caMessage)
 {
 #ifndef MASTER_GOLD
 	ai().script_engine().script_log	(ScriptStorage::eLuaMessageTypeMessage,"%s",caMessage);
+#else
+    Log(caMessage);
 #endif // #ifndef MASTER_GOLD
 
 #ifdef USE_DEBUGGER
@@ -30,9 +32,9 @@ void LuaLog(LPCSTR caMessage)
 void ErrorLog(LPCSTR caMessage)
 {
 	ai().script_engine().error_log("%s",caMessage);
-#ifdef PRINT_CALL_STACK
+//#ifdef PRINT_CALL_STACK
 	ai().script_engine().print_stack();
-#endif // #ifdef PRINT_CALL_STACK
+//#endif //-PRINT_CALL_STACK
 	
 #ifdef USE_DEBUGGER
 #	ifndef USE_LUA_STUDIO
@@ -49,10 +51,18 @@ void ErrorLog(LPCSTR caMessage)
 	R_ASSERT2(0, caMessage);
 }
 
+//AVO:
+void PrintStack()
+{
+    ai().script_engine().print_stack();
+}
+//-AVO
+
 void FlushLogs()
 {
-#ifdef DEBUG
+//#ifdef DEBUG
 	FlushLog();
+#ifdef LUA_DEBUG_PRINT //DEBUG
 	ai().script_engine().flush_log();
 #endif // DEBUG
 }
@@ -155,7 +165,9 @@ struct profile_timer_script {
 
 	IC		void					stop					()
 	{
-		THROW					(m_recurse_mark);
+        if (!m_recurse_mark)
+			return;
+		
 		--m_recurse_mark;
 		
 		if (m_recurse_mark)
@@ -209,6 +221,25 @@ static bool is_enough_address_space_available_impl()
 void CScriptEngine::script_register(lua_State *L)
 {
 	module(L)[
+        //def("log1", (void(*) (LPCSTR msg)) &Log), // AVO: fixed log func
+        def("log", &LuaLog),
+        def("print_stack", &PrintStack),
+        def("error_log", &ErrorLog),
+        def("flush", &FlushLogs),
+        def("prefetch", &prefetch_module),
+        def("verify_if_thread_is_running", &verify_if_thread_is_running),
+        def("editor", &is_editor),
+        def("bit_and", &bit_and),
+        def("bit_or", &bit_or),
+        def("bit_xor", &bit_xor),
+        def("bit_not", &bit_not),
+        def("user_name", &user_name),
+        def("time_global", &script_time_global),
+        def("time_global_async", &script_time_global_async),
+#ifdef XRGAME_EXPORTS
+        def("device", &get_device),
+        def("is_enough_address_space_available", &is_enough_address_space_available_impl),
+#endif //-XRGAME_EXPORTS
 		class_<profile_timer_script>("profile_timer")
 			.def(constructor<>())
 			.def(constructor<profile_timer_script&>())
@@ -220,7 +251,7 @@ void CScriptEngine::script_register(lua_State *L)
 			.def("time",&profile_timer_script::time)
 	];
 
-	function	(L,	"log",								LuaLog);
+	/*function	(L,	"log",								LuaLog);
 	function	(L,	"error_log",						ErrorLog);
 	function	(L,	"flush",							FlushLogs);
 	function	(L,	"prefetch",							prefetch_module);
@@ -236,5 +267,5 @@ void CScriptEngine::script_register(lua_State *L)
 #ifdef XRGAME_EXPORTS
 	function	(L,	"device",							get_device);
 	function	(L,	"is_enough_address_space_available",is_enough_address_space_available_impl);
-#endif // #ifdef XRGAME_EXPORTS
+#endif // #ifdef XRGAME_EXPORTS*/
 }

@@ -421,6 +421,8 @@ void CSE_ALifeTraderAbstract::set_specific_character	(shared_str new_spec_char)
 	if(NO_REPUTATION == m_reputation)
 		m_reputation = selected_char.Reputation();
 
+	m_icon_name = selected_char.IconName();
+
 	m_character_name = *(CStringTable().translate(selected_char.Name()));
 	
 	LPCSTR gen_name = "GENERATE_NAME_";
@@ -982,7 +984,7 @@ u32	 CSE_ALifeCreatureAbstract::ef_detector_type() const
 #ifdef XRGAME_EXPORTS
 void CSE_ALifeCreatureAbstract::on_death		(CSE_Abstract *killer)
 {
-	VERIFY						(!m_game_death_time);
+	//VERIFY						(!m_game_death_time);
 	m_game_death_time			= ai().get_alife() ? alife().time_manager().game_time() : Level().GetGameTime();
 	fHealth						= -1.f;
 }
@@ -998,7 +1000,7 @@ void CSE_ALifeCreatureAbstract::STATE_Write	(NET_Packet &tNetPacket)
 	save_data					(m_dynamic_out_restrictions,tNetPacket);
 	save_data					(m_dynamic_in_restrictions,tNetPacket);
 	tNetPacket.w_u16			( get_killer_id() );
-	R_ASSERT(!(get_health() > 0.0f && get_killer_id() != u16(-1)));
+	//R_ASSERT(!(get_health() > 0.0f && get_killer_id() != u16(-1)));
 	tNetPacket.w_u64			(m_game_death_time);
 }
 
@@ -1110,13 +1112,13 @@ bool CSE_ALifeCreatureAbstract::can_switch_offline	() const
 	return						(inherited::can_switch_offline() && (get_health() > 0.f));
 }
 
-void CSE_ALifeCreatureAbstract::set_health	(float const health_value)
+IC	void CSE_ALifeCreatureAbstract::set_health	(float const health_value)
 {
 	VERIFY( !((get_killer_id() != u16(-1)) && (health_value > 0.f)) );
 	fHealth = health_value;
 }
 
-void CSE_ALifeCreatureAbstract::set_killer_id	(ALife::_OBJECT_ID const killer_id)
+IC	void CSE_ALifeCreatureAbstract::set_killer_id	(ALife::_OBJECT_ID const killer_id)
 {
 	m_killer_id = killer_id;
 }
