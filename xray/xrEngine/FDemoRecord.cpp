@@ -405,8 +405,11 @@ void CDemoRecord::IR_OnKeyboardPress	(int dik)
 	if (dik == DIK_F12)		MakeScreenshot			();
 	if (dik == DIK_ESCAPE)	fLifeTime				= -1;
 
-#ifndef MASTER_GOLD
+//Alundaio: Teleport to demo cam
+//#ifndef MASTER_GOLD
 	if (dik == DIK_RETURN)
+	{
+	if (strstr(Core.Params, "-dbg"))
 	{	
 		if (g_pGameLevel->CurrentEntity())
 		{
@@ -414,7 +417,9 @@ void CDemoRecord::IR_OnKeyboardPress	(int dik)
 			fLifeTime		= -1; 
 		}
 	}
-#endif // #ifndef MASTER_GOLD
+	}
+//#endif // #ifndef MASTER_GOLD
+//-Alundaio
 
 	if	(dik == DIK_PAUSE)		
 		Device.Pause(!Device.Paused(), TRUE, TRUE, "demo_record");
@@ -520,7 +525,7 @@ void CDemoRecord::MakeScreenshot	()
 
 void CDemoRecord::MakeLevelMapScreenshot(BOOL bHQ)
 {
-	Console->Execute("run_string level.set_weather(\"map\",true)");
+	//Console->Execute("run_string level.set_weather(\"map\",true)");
 
 	if(!bHQ)
 		m_iLMScreenshotFragment = -1;

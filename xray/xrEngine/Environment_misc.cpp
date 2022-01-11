@@ -10,7 +10,7 @@
 #include "../xrServerEntities/object_broker.h"
 #include "../xrServerEntities/LevelGameDef.h"
 
-#include "securom_api.h"
+//#include "securom_api.h"
 
 void CEnvModifier::load	(IReader* fs, u32 version)
 {
@@ -234,6 +234,10 @@ CEnvDescriptor::CEnvDescriptor	(shared_str const& identifier) :
 	m_fSunShaftsIntensity = 0;
 	m_fWaterIntensity = 1;
 
+#ifdef TREE_WIND_EFFECT
+    m_fTreeAmplitudeIntensity = 0.01;
+#endif
+
     lens_flare_id		= "";
 	tb_id				= "";
     
@@ -286,7 +290,8 @@ void CEnvDescriptor::load	(CEnvironment& environment, CInifile& config)
 //			deg2rad(config.r_fvector2(m_identifier.c_str(),"sun_dir").y),
 //			deg2rad(config.r_fvector2(m_identifier.c_str(),"sun_dir").x)
 //		);
-	VERIFY2					(sun_dir.y < 0, "Invalid sun direction settings while loading");
+    //AVO: commented to allow COC run in debug. I belive Cromm set longtitude to negative value in AF3 and that's why it is failing here
+	//VERIFY2					(sun_dir.y < 0, "Invalid sun direction settings while loading");
 
 	lens_flare_id			= environment.eff_LensFlare->AppendDef(environment, environment.m_suns_config, config.r_string(m_identifier.c_str(),"sun"));
 	tb_id					= environment.eff_Thunderbolt->AppendDef(environment, environment.m_thunderbolt_collections_config, environment.m_thunderbolts_config, config.r_string(m_identifier.c_str(),"thunderbolt_collection"));
@@ -299,6 +304,11 @@ void CEnvDescriptor::load	(CEnvironment& environment, CInifile& config)
 
 	if (config.line_exist(m_identifier.c_str(),"water_intensity"))
 		m_fWaterIntensity = config.r_float(m_identifier.c_str(),"water_intensity");
+
+#ifdef TREE_WIND_EFFECT
+    if (config.line_exist(m_identifier.c_str(), "tree_amplitude_intensity"))
+        m_fTreeAmplitudeIntensity = config.r_float(m_identifier.c_str(), "tree_amplitude_intensity");
+#endif
 
 	C_CHECK					(clouds_color);
 	C_CHECK					(sky_color	);
@@ -446,6 +456,10 @@ void CEnvDescriptorMixer::lerp	(CEnvironment* , CEnvDescriptor& A, CEnvDescripto
 	m_fSunShaftsIntensity	=	fi*A.m_fSunShaftsIntensity + f*B.m_fSunShaftsIntensity;
 	m_fWaterIntensity		=	fi*A.m_fWaterIntensity + f*B.m_fWaterIntensity;
 
+#ifdef TREE_WIND_EFFECT
+    m_fTreeAmplitudeIntensity = fi*A.m_fTreeAmplitudeIntensity + f*B.m_fTreeAmplitudeIntensity;
+#endif
+
 	// colors
 //.	sky_color.lerp			(A.sky_color,B.sky_color,f).add(Mdf.sky_color).mul(modif_power);
 	sky_color.lerp			(A.sky_color,B.sky_color,f);
@@ -534,7 +548,7 @@ void	CEnvironment::mods_unload		()
 
 void    CEnvironment::load_level_specific_ambients ()
 {
-	SECUROM_MARKER_PERFORMANCE_ON(13)
+	//SECUROM_MARKER_PERFORMANCE_ON(13)
 
 	const shared_str level_name = g_pGameLevel->name();
 
@@ -569,7 +583,7 @@ void    CEnvironment::load_level_specific_ambients ()
 
 	xr_delete(level_ambients);
 
-	SECUROM_MARKER_PERFORMANCE_OFF(13)
+	//SECUROM_MARKER_PERFORMANCE_OFF(13)
 }
 
 CEnvDescriptor* CEnvironment::create_descriptor	(shared_str const& identifier, CInifile* config)
@@ -588,7 +602,7 @@ void CEnvironment::load_weathers		()
 	typedef xr_vector<LPSTR>		file_list_type;
 	file_list_type*					file_list = FS.file_list_open("$game_weathers$","");
 	VERIFY							(file_list);
-
+    xr_string 						id;
 	file_list_type::const_iterator	i = file_list->begin();
 	file_list_type::const_iterator	e = file_list->end();
 	for ( ; i != e; ++i) {
@@ -598,14 +612,11 @@ void CEnvironment::load_weathers		()
 		VERIFY						((*i)[length - 3] == 'l');
 		VERIFY						((*i)[length - 2] == 't');
 		VERIFY						((*i)[length - 1] == 'x');
-		u32							new_length = length - 4;
-		LPSTR						identifier = (LPSTR)_alloca((new_length + 1)*sizeof(char));
-		Memory.mem_copy				(identifier, *i, new_length*sizeof(char));
-		identifier[new_length]		= 0;
-		EnvVec& env					= WeatherCycles[identifier];
+        id.assign					(*i, length - 4);
+        EnvVec& env 				= WeatherCycles[id.c_str()];
 
 		string_path					file_name;
-		FS.update_path				(file_name, "$game_weathers$", identifier);
+        FS.update_path				(file_name, "$game_weathers$", id.c_str());
 		xr_strcat					(file_name, ".ltx");
 		CInifile*					config = CInifile::Create(file_name);
 
@@ -645,7 +656,7 @@ void CEnvironment::load_weather_effects	()
 	typedef xr_vector<LPSTR>		file_list_type;
 	file_list_type*					file_list = FS.file_list_open("$game_weather_effects$","");
 	VERIFY							(file_list);
-
+    xr_string						id;
 	file_list_type::const_iterator	i = file_list->begin();
 	file_list_type::const_iterator	e = file_list->end();
 	for ( ; i != e; ++i) {
@@ -655,14 +666,11 @@ void CEnvironment::load_weather_effects	()
 		VERIFY						((*i)[length - 3] == 'l');
 		VERIFY						((*i)[length - 2] == 't');
 		VERIFY						((*i)[length - 1] == 'x');
-		u32							new_length = length - 4;
-		LPSTR						identifier = (LPSTR)_alloca((new_length + 1)*sizeof(char));
-		Memory.mem_copy				(identifier, *i, new_length*sizeof(char));
-		identifier[new_length]		= 0;
-		EnvVec& env					= WeatherFXs[identifier];
+        id.assign					(*i, length - 4);
+        EnvVec& env 				= WeatherFXs[id.c_str()];
 
 		string_path					file_name;
-		FS.update_path				(file_name, "$game_weather_effects$", identifier);
+		FS.update_path				(file_name, "$game_weather_effects$", id.c_str());
 		xr_strcat					(file_name, ".ltx");
 		CInifile*					config = CInifile::Create(file_name);
 

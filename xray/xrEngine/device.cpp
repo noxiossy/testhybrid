@@ -28,6 +28,8 @@
 
 #include "xrSash.h"
 
+#include "../build_config_defines.h"
+
 #pragma comment( lib, "d3dx9.lib"		)
 
 ENGINE_API CRenderDevice Device;

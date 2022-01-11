@@ -15,7 +15,7 @@
 
 #include "../Include/xrRender/UIRender.h"
 
-#include "securom_api.h"
+//#include "securom_api.h"
 
 static float const UI_BASE_WIDTH	= 1024.0f;
 static float const UI_BASE_HEIGHT	= 768.0f;
@@ -438,7 +438,7 @@ void CConsole::DrawBackgrounds( bool bGame )
 	if ( m_select_tip < (int)m_tips.size() )
 	{
 		Frect r;
-
+        xr_string tmp;
 		vecTipsEx::iterator itb = m_tips.begin() + m_start_tip;
 		vecTipsEx::iterator ite = m_tips.end();
 		for ( u32 i = 0; itb != ite; ++itb, ++i ) // tips
@@ -455,15 +455,13 @@ void CConsole::DrawBackgrounds( bool bGame )
 			}
 
 			r.null();
-			LPSTR  tmp      = (PSTR)_alloca( (str_size + 1) * sizeof(char) );
+            tmp.assign(ts.text.c_str(), ts.HL_start);
+            r.x1 = pr.x1 + w1 + pFont->SizeOf_(tmp.c_str());
+            r.y1 = pr.y1 + i * font_h;
 
-			strncpy_s( tmp, str_size+1, ts.text.c_str(), ts.HL_start );
-			r.x1 = pr.x1 + w1 + pFont->SizeOf_( tmp );
-			r.y1 = pr.y1 + i * font_h;
-
-			strncpy_s( tmp, str_size+1, ts.text.c_str(), ts.HL_finish );
-			r.x2 = pr.x1 + w1 + pFont->SizeOf_( tmp );
-			r.y2 = r.y1 + font_h;
+            tmp.assign(ts.text.c_str(), ts.HL_finish);
+            r.x2 = pr.x1 + w1 + pFont->SizeOf_(tmp.c_str());
+            r.y2 = r.y1 + font_h;
 
 			DrawRect( r, tips_word_color );
 
@@ -606,7 +604,7 @@ void CConsole::ExecuteCommand( LPCSTR cmd_str, bool record_cmd )
 
 void CConsole::Show()
 {
-	SECUROM_MARKER_HIGH_SECURITY_ON(11)
+	//SECUROM_MARKER_HIGH_SECURITY_ON(11)
 
 	if ( bVisible )
 	{
@@ -626,7 +624,7 @@ void CConsole::Show()
 	Device.seqRender.Add( this, 1 );
 	Device.seqFrame.Add( this );
 
-	SECUROM_MARKER_HIGH_SECURITY_OFF(11)
+	//SECUROM_MARKER_HIGH_SECURITY_OFF(11)
 }
 
 extern CInput* pInput;
@@ -768,20 +766,18 @@ bool CConsole::add_internal_cmds( LPCSTR in_str, vecTipsEx& out_v )
 	
 	bool res = false;
 	// word in begin
+    xr_string name2;
 	vecCMD_IT itb = Commands.begin();
 	vecCMD_IT ite = Commands.end();
 	for ( ; itb != ite; ++itb )
 	{
 		LPCSTR name = itb->first;
 		u32 name_sz = xr_strlen(name);
-		PSTR  name2 = (PSTR)_alloca( (name_sz+1) * sizeof(char) );
 		
 		if ( name_sz >= in_sz )
-		{
-			strncpy_s( name2, name_sz+1, name, in_sz );
-			name2[in_sz] = 0;
-
-			if ( !stricmp( name2, in_str ) )
+        {
+            name2.assign(name, in_sz);
+            if (!stricmp(name2.c_str(), in_str))
 			{
 				shared_str temp;
 				temp._set( name );

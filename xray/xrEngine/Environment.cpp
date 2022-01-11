@@ -14,6 +14,8 @@
 
 #include "xr_input.h"
 
+#include "../build_config_defines.h"
+
 //#include "resourcemanager.h"
 
 #ifndef _EDITOR
@@ -497,8 +499,12 @@ void CEnvironment::OnFrame()
 	lerp					(current_weight);
 
 	//	Igor. Dynamic sun position. 
+    //AVO: allow sun to move as defined in configs
+#ifdef DYNAMIC_SUN_MOVEMENT
 	if ( !::Render->is_sun_static())
 		calculate_dynamic_sun_dir();
+#endif
+    //-AVO
 
 #ifndef MASTER_GOLD
 	if(CurrentEnv->sun_dir.y>0)
@@ -573,7 +579,7 @@ void CEnvironment::calculate_dynamic_sun_dir()
 		cosAZ	= (_sin(deg2rad(D))-_sin(LatitudeR)*_cos(SZA))/sin_SZA_X_cos_Latitude;
 
 	clamp( cosAZ, -1.0f, 1.0f);
-	float AZ = acosf(cosAZ);
+    float AZ = acosf(cosAZ) + PI; // AVO: sun direction fix
 
 	const Fvector2 minAngle = Fvector2().set(deg2rad(1.0f), deg2rad(3.0f));
 

@@ -21,13 +21,13 @@
 #include "resource.h"
 #include "LightAnimLibrary.h"
 #include "../xrcdb/ispatial.h"
-#include "CopyProtection.h"
+//#include "CopyProtection.h"
 #include "Text_Console.h"
 #include <process.h>
 #include <locale.h>
 
 #include "xrSash.h"
-#include "CustomHUD.h"
+//#include "CustomHUD.h"
 
 //---------------------------------------------------------------------
 ENGINE_API CInifile* pGameIni		= NULL;
@@ -668,7 +668,7 @@ ENGINE_API	bool g_dedicated_server	= false;
 
 #ifndef DEDICATED_SERVER
 	// forward declaration for Parental Control checks
-	BOOL IsPCAccessAllowed(); 
+	//BOOL IsPCAccessAllowed(); 
 #endif // DEDICATED_SERVER
 
 int APIENTRY WinMain_impl(HINSTANCE hInstance,
@@ -711,12 +711,6 @@ int APIENTRY WinMain_impl(HINSTANCE hInstance,
 	// Check for virtual memory
 	if ( ( strstr( lpCmdLine , "--skipmemcheck" ) == NULL ) && IsOutOfVirtualMemory() )
 		return 0;
-
-	// Parental Control for Vista and upper
-	if ( ! IsPCAccessAllowed() ) {
-		MessageBox( NULL , "Access restricted" , "Parental Control" , MB_OK | MB_ICONERROR );
-		return 1;
-	}
 
 	// Check for another instance
 #ifdef NO_MULTI_INSTANCES
@@ -1226,7 +1220,7 @@ void CApplication::LoadStage()
 	Msg							("* phase time: %d ms",phase_timer.GetElapsed_ms());	phase_timer.Start();
 	Msg							("* phase cmem: %d K", Memory.mem_usage()/1024);
 	
-	if (g_pGamePersistent->GameType()==1 && strstr(Core.Params,"alife"))
+	if (g_pGamePersistent->GameType()==1 && !xr_strcmp(g_pGamePersistent->m_game_params.m_alife, "alife"))
 		max_load_stage			= 17;
 	else
 		max_load_stage			= 14;
@@ -1407,56 +1401,6 @@ void CApplication::LoadAllArchives()
 	}
 }
 
-#ifndef DEDICATED_SERVER
-// Parential control for Vista and upper
-typedef BOOL (*PCCPROC)( CHAR* ); 
-
-BOOL IsPCAccessAllowed()
-{
-	CHAR szPCtrlChk[ MAX_PATH ] , szGDF[ MAX_PATH ] , *pszLastSlash;
-	HINSTANCE hPCtrlChk = NULL;
-	PCCPROC pctrlchk = NULL;
-	BOOL bAllowed = TRUE;
-
-	if ( ! GetModuleFileName( NULL , szPCtrlChk , MAX_PATH ) )
-		return TRUE;
-
-	if ( ( pszLastSlash = strrchr( szPCtrlChk , '\\' ) ) == NULL )
-		return TRUE;
-
-	*pszLastSlash = '\0';
-
-	strcpy_s( szGDF , szPCtrlChk );
-
-	strcat_s( szPCtrlChk , "\\pctrlchk.dll" );
-	if ( GetFileAttributes( szPCtrlChk ) == INVALID_FILE_ATTRIBUTES )
-		return TRUE;
-
-	if ( ( pszLastSlash = strrchr( szGDF , '\\' ) ) == NULL )
-		return TRUE;
-
-	*pszLastSlash = '\0';
-
-	strcat_s( szGDF , "\\Stalker-COP.exe" );
-	if ( GetFileAttributes( szGDF ) == INVALID_FILE_ATTRIBUTES )
-		return TRUE;
-
-	if ( ( hPCtrlChk = LoadLibrary( szPCtrlChk ) ) == NULL )
-		return TRUE;
-
-	if ( ( pctrlchk = (PCCPROC) GetProcAddress( hPCtrlChk , "pctrlchk" ) ) == NULL ) {
-		FreeLibrary( hPCtrlChk );
-		return TRUE;
-	}
-
-	bAllowed = pctrlchk( szGDF );
-
-	FreeLibrary( hPCtrlChk );
-
-	return bAllowed;
-}
-#endif // DEDICATED_SERVER
-
 //launcher stuff----------------------------
 extern "C"{
 	typedef int	 __cdecl LauncherFunc	(int);
@@ -1524,8 +1468,10 @@ void doBenchmark(LPCSTR name)
 		xr_strcpy				(g_sBenchmarkName, test_name);
 		
 		test_command		= ini.r_string_wb("benchmark",test_name);
-		xr_strcpy			(Core.Params,*test_command);
-		_strlwr_s				(Core.Params);
+        u32 cmdSize = test_command.size() + 1;
+        Core.Params = (char*)xr_realloc(Core.Params, cmdSize);
+        xr_strcpy(Core.Params, cmdSize, test_command.c_str());
+        xr_strlwr(Core.Params);
 		
 		InitInput					();
 		if(i){
