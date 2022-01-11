@@ -39,11 +39,11 @@ void xrCore::_initialize	(LPCSTR _ApplicationName, LogCallback cb, BOOL init_fs,
 #endif
 		// Init COM so we can use CoCreateInstance
 //		HRESULT co_res = 
-		if (!strstr(GetCommandLine(),"-editor"))
-			CoInitializeEx	(NULL, COINIT_MULTITHREADED);
+        Params = xr_strdup(GetCommandLine());
+        xr_strlwr(Params);
 
-		xr_strcpy			(Params,sizeof(Params),GetCommandLine());
-		_strlwr_s			(Params,sizeof(Params));
+		if (!strstr(Params,"-editor"))
+			CoInitializeEx	(NULL, COINIT_MULTITHREADED);
 
 		string_path		fn,dr,di;
 
@@ -145,7 +145,7 @@ void xrCore::_destroy		()
 			xr_delete		(trained_model);
 		}
 #endif
-
+        xr_free				(Params);
 		Memory._destroy		();
 	}
 }

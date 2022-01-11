@@ -528,6 +528,10 @@ IC bool pred_str_ff(const _finddata_t& x, const _finddata_t& y)
 
 bool ignore_name(const char* _name)
 {
+	// ignore windows hidden thumbs.db
+	if (0 == strcmp(_name, "Thumbs.db"))
+		return true;
+
 	// ignore processing ".svn" folders
 	return ( _name[0]=='.' && _name[1]=='s' && _name[2]=='v' && _name[3]=='n' && _name[4]==0);
 }
@@ -829,9 +833,6 @@ void CLocatorAPI::_initialize	(u32 flags, LPCSTR target_folder, LPCSTR fs_name)
 			pAppdataPath->_set_root(c_newAppPathRoot);
 			rescan_path(pAppdataPath->m_Path, pAppdataPath->m_Flags.is(FS_Path::flRecurse));
 		}
-
-		int x=0;
-		x=x;
 	}
 
 	rec_files.clear	();
@@ -1150,7 +1151,7 @@ void CLocatorAPI::file_from_archive	(IReader *&R, LPCSTR fname, const file &desc
 	R							= xr_new<CTempReader>(dest,desc.size_real,0);
 	UnmapViewOfFile				(ptr);
 
-#ifdef DEBUG
+#ifdef FS_DEBUG
 	unregister_file_mapping		(ptr,sz);
 #endif // DEBUG
 }

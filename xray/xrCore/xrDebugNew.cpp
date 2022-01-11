@@ -12,6 +12,8 @@
 #include <direct.h>
 #pragma warning(pop)
 
+#include "../build_config_defines.h"
+
 extern bool shared_str_initialized;
 
 #ifdef __BORLANDC__
@@ -23,7 +25,9 @@ extern bool shared_str_initialized;
         static BOOL			bException	= TRUE;
     #   define USE_BUG_TRAP
 #else
+#ifndef NO_BUG_TRAP
     #   define USE_BUG_TRAP
+#endif //-!NO_BUG_TRAP
     #	define DEBUG_INVOKE	__asm int 3
         static BOOL			bException	= FALSE;
 #endif
@@ -44,7 +48,7 @@ extern bool shared_str_initialized;
 #include <new.h>							// for _set_new_mode
 #include <signal.h>							// for signals
 
-#ifdef DEBUG
+#ifdef NO_BUG_TRAP //DEBUG
 #	define USE_OWN_ERROR_MESSAGE_WINDOW
 #else // DEBUG
 #	define USE_OWN_MINI_DUMP
@@ -73,6 +77,8 @@ void LogStackTrace	(LPCSTR header)
 
 void xrDebug::gather_info		(const char *expression, const char *description, const char *argument0, const char *argument1, const char *file, int line, const char *function, LPSTR assertion_info, u32 const assertion_info_size)
 {
+    if (!expression)
+        expression = "<no expression>";
 	LPSTR				buffer_base = assertion_info;
 	LPSTR				buffer = assertion_info;
 	int assertion_size	= (int)assertion_info_size;
@@ -160,6 +166,46 @@ void xrDebug::do_exit	(const std::string &message)
 	TerminateProcess	(GetCurrentProcess(),1);
 }
 
+#ifdef NO_BUG_TRAP
+//AVO: simplified function
+void xrDebug::backend(const char* expression, const char* description, const char* argument0, const char* argument1, const char* file, int line, const char* function, bool& ignore_always)
+{
+    static xrCriticalSection CS
+#ifdef PROFILE_CRITICAL_SECTIONS
+        (MUTEX_PROFILE_ID(xrDebug::backend))
+#endif //-PROFILE_CRITICAL_SECTIONS
+        ;
+
+    CS.Enter();
+
+    string4096 assertion_info;
+
+    gather_info(expression, description, argument0, argument1, file, line, function, assertion_info, sizeof(assertion_info));
+
+    LPCSTR endline = "\r\n";
+    LPSTR buffer = assertion_info + xr_strlen(assertion_info);
+    buffer += xr_sprintf(buffer, sizeof(assertion_info) - u32(buffer - &assertion_info[0]), "%sPress OK to abort execution%s", endline, endline);
+
+    if (handler)
+        handler();
+
+    FlushLog();
+
+    ShowCursor(true);
+    ShowWindow(GetActiveWindow(), SW_FORCEMINIMIZE);
+    MessageBox(
+        GetTopWindow(NULL),
+        assertion_info,
+        "Fatal Error",
+        MB_OK | MB_ICONERROR | MB_SYSTEMMODAL
+        );
+
+    CS.Leave();
+
+    TerminateProcess(GetCurrentProcess(), 1);
+}
+//-AVO
+#else
 void xrDebug::backend	(const char *expression, const char *description, const char *argument0, const char *argument1, const char *file, int line, const char *function, bool &ignore_always)
 {
 	static xrCriticalSection CS
@@ -196,12 +242,14 @@ void xrDebug::backend	(const char *expression, const char *description, const ch
 	MessageBox			(NULL,assertion_info,"X-Ray error",MB_OK|MB_ICONERROR|MB_SYSTEMMODAL);
 #else
 #	ifdef USE_OWN_ERROR_MESSAGE_WINDOW
+    ShowCursor(true);
+    ShowWindow(GetActiveWindow(), SW_FORCEMINIMIZE);
 		int					result = 
 			MessageBox(
 				GetTopWindow(NULL),
 				assertion_info,
 				"Fatal Error",
-				MB_CANCELTRYCONTINUE|MB_ICONERROR|MB_SYSTEMMODAL
+        /*MB_CANCELTRYCONTINUE*/MB_OK | MB_ICONERROR | /*MB_SYSTEMMODAL |*/ MB_DEFBUTTON1 | MB_SETFOREGROUND
 			);
 
 		switch (result) {
@@ -221,9 +269,13 @@ void xrDebug::backend	(const char *expression, const char *description, const ch
 				ignore_always	= true;
 				break;
 			}
-			default: {
-				Msg("! xrDebug::backend MessageBox error[%d] GetLastError=[%lu]", result, GetLastError());
+		    case IDOK:
+		    {
+		        FlushLog();
+		        TerminateProcess(GetCurrentProcess(), 1);
 			}
+		    default:
+		        DEBUG_INVOKE;
 		}
 #	else // USE_OWN_ERROR_MESSAGE_WINDOW
 #		ifdef USE_BUG_TRAP
@@ -238,6 +290,7 @@ void xrDebug::backend	(const char *expression, const char *description, const ch
 
 	CS.Leave			();
 }
+#endif
 
 LPCSTR xrDebug::error2string	(long code)
 {
@@ -246,7 +299,7 @@ LPCSTR xrDebug::error2string	(long code)
 
 #ifdef _M_AMD64
 #else
-	result				= DXGetErrorString(code);
+	result				= DXGetErrorDescription(code);
 #endif
 	if (0==result)
 	{
@@ -258,17 +311,17 @@ LPCSTR xrDebug::error2string	(long code)
 
 void xrDebug::error		(long hr, const char* expr, const char *file, int line, const char *function, bool &ignore_always)
 {
-	backend		(error2string(hr),expr,0,0,file,line,function,ignore_always);
+	backend		(expr,error2string(hr),0,0,file,line,function,ignore_always);
 }
 
 void xrDebug::error		(long hr, const char* expr, const char* e2, const char *file, int line, const char *function, bool &ignore_always)
 {
-	backend		(error2string(hr),expr,e2,0,file,line,function,ignore_always);
+	backend		(expr,error2string(hr),e2,0,file,line,function,ignore_always);
 }
 
 void xrDebug::fail		(const char *e1, const char *file, int line, const char *function, bool &ignore_always)
 {
-	backend		("assertion failed",e1,0,0,file,line,function,ignore_always);
+	backend		(e1,"assertion failed",0,0,file,line,function,ignore_always);
 }
 
 void xrDebug::fail		(const char *e1, const std::string &e2, const char *file, int line, const char *function, bool &ignore_always)
@@ -291,6 +344,33 @@ void xrDebug::fail		(const char *e1, const char *e2, const char *e3, const char 
 	backend		(e1,e2,e3,e4,file,line,function,ignore_always);
 }
 
+//AVO: print, dont crash
+void xrDebug::soft_fail(LPCSTR e1, LPCSTR file, int line, LPCSTR function)
+{
+    Msg("! VERIFY_FAILED: %s[%d] {%s}  %s", file, line, function, e1);
+}
+void xrDebug::soft_fail(LPCSTR e1, const std::string &e2, LPCSTR file, int line, LPCSTR function)
+{
+    Msg("! VERIFY_FAILED: %s[%d] {%s}  %s %s", file, line, function, e1, e2.c_str());
+}
+void xrDebug::soft_fail(LPCSTR e1, LPCSTR e2, LPCSTR file, int line, LPCSTR function)
+{
+    Msg("! VERIFY_FAILED: %s[%d] {%s}  %s %s", file, line, function, e1, e2);
+}
+void xrDebug::soft_fail(LPCSTR e1, LPCSTR e2, LPCSTR e3, LPCSTR file, int line, LPCSTR function)
+{
+    Msg("! VERIFY_FAILED: %s[%d] {%s}  %s %s %s", file, line, function, e1, e2, e3);
+}
+void xrDebug::soft_fail(LPCSTR e1, LPCSTR e2, LPCSTR e3, LPCSTR e4, LPCSTR file, int line, LPCSTR function)
+{
+    Msg("! VERIFY_FAILED: %s[%d] {%s}  %s %s %s %s", file, line, function, e1, e2, e3, e4);
+}
+void xrDebug::soft_fail(LPCSTR e1, LPCSTR e2, LPCSTR e3, LPCSTR e4, LPCSTR e5, LPCSTR file, int line, LPCSTR function)
+{
+    Msg("! VERIFY_FAILED: %s[%d] {%s}  %s %s %s %s %s", file, line, function, e1, e2, e3, e4, e5);
+}
+//-AVO
+
 void __cdecl xrDebug::fatal(const char *file, int line, const char *function, const char* F,...)
 {
 	string1024	buffer;
@@ -302,7 +382,7 @@ void __cdecl xrDebug::fatal(const char *file, int line, const char *function, co
 
 	bool		ignore_always = true;
 
-	backend		("fatal error","<no expression>",buffer,0,file,line,function,ignore_always);
+	backend		(nullptr,"fatal error",buffer,0,file,line,function,ignore_always);
 }
 
 typedef void (*full_memory_stats_callback_type) ( );
@@ -364,13 +444,15 @@ void CALLBACK PreErrorHandler	(INT_PTR)
 	if (*g_bug_report_file)
 		BT_AddLogFile		(g_bug_report_file);
 
-	BT_MakeSnapshot			( 0 );
+	BT_SaveSnapshot			( 0 );
 #endif // USE_BUG_TRAP
 }
 
 #ifdef USE_BUG_TRAP
 void SetupExceptionHandler	(const bool &dedicated)
 {
+	UINT prevMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
+	SetErrorMode(prevMode|SEM_NOGPFAULTERRORBOX);
 	BT_InstallSehFilter		();
 #if 1//ndef USE_OWN_ERROR_MESSAGE_WINDOW
 	if (!dedicated && !strstr(GetCommandLine(),"-silent_error_mode"))
@@ -444,7 +526,7 @@ please Submit Bug or save report and email it manually (button More...).\
 }
 #endif // USE_BUG_TRAP
 
-#if 1
+//#if 1
 extern void BuildStackTrace(struct _EXCEPTION_POINTERS *pExceptionInfo);
 typedef LONG WINAPI UnhandledExceptionFilterType(struct _EXCEPTION_POINTERS *pExceptionInfo);
 typedef LONG ( __stdcall *PFNCHFILTFN ) ( EXCEPTION_POINTERS * pExPtrs ) ;
@@ -593,12 +675,13 @@ void format_message	(LPSTR buffer, const u32 &buffer_size)
     #include <errorrep.h>
 #endif
 
+#ifdef NO_BUG_TRAP
 LONG WINAPI UnhandledFilter	(_EXCEPTION_POINTERS *pExceptionInfo)
 {
 	string256				error_message;
 	format_message			(error_message,sizeof(error_message));
 
-	if (!error_after_dialog && !strstr(GetCommandLine(),"-no_call_stack_assert")) {
+	//if (!error_after_dialog && !strstr(GetCommandLine(),"-no_call_stack_assert")) {
 		CONTEXT				save = *pExceptionInfo->ContextRecord;
 		BuildStackTrace		(pExceptionInfo);
 		*pExceptionInfo->ContextRecord = save;
@@ -622,7 +705,67 @@ LONG WINAPI UnhandledFilter	(_EXCEPTION_POINTERS *pExceptionInfo)
 #endif // #ifdef DEBUG
 		}
 
-		if (*error_message) {
+    if (*error_message)
+    {
+        if (shared_str_initialized)
+            Msg("\n%s", error_message);
+
+        xr_strcat(error_message, sizeof(error_message), "\r\n");
+#ifdef DEBUG
+        if (!IsDebuggerPresent())
+            os_clipboard::update_clipboard(buffer);
+#endif //-DEBUG
+    }
+
+    FlushLog();
+
+    ShowCursor(true);
+    ShowWindow(GetActiveWindow(), SW_FORCEMINIMIZE);
+    MessageBox(
+        GetTopWindow(NULL),
+        "Unhandled exception occured. See log for details",
+        "Fatal Error",
+        MB_OK | MB_ICONERROR | MB_SYSTEMMODAL
+        );
+    TerminateProcess(GetCurrentProcess(), 1);
+
+    return (EXCEPTION_CONTINUE_SEARCH);
+}
+//-AVO
+#else
+LONG WINAPI UnhandledFilter(_EXCEPTION_POINTERS* pExceptionInfo)
+{
+    string256 error_message;
+    format_message(error_message, sizeof(error_message));
+
+    if (!error_after_dialog && !strstr(GetCommandLine(), "-no_call_stack_assert"))
+    {
+        CONTEXT save = *pExceptionInfo->ContextRecord;
+        BuildStackTrace(pExceptionInfo);
+        *pExceptionInfo->ContextRecord = save;
+
+        if (shared_str_initialized)
+            Msg("stack trace:\n");
+
+        if (!IsDebuggerPresent())
+        {
+            os_clipboard::copy_to_clipboard("stack trace:\r\n\r\n");
+        }
+
+        string4096 buffer;
+        for (int i = 0; i < g_stackTraceCount; ++i)
+        {
+            if (shared_str_initialized)
+                Msg("%s", g_stackTrace[i]);
+            xr_sprintf(buffer, sizeof(buffer), "%s\r\n", g_stackTrace[i]);
+#ifdef DEBUG
+            if (!IsDebuggerPresent())
+                os_clipboard::update_clipboard(buffer);
+#endif //-DEBUG
+        }
+
+        if (*error_message)
+        {
 			if (shared_str_initialized)
 				Msg			("\n%s",error_message);
 
@@ -693,7 +836,11 @@ LONG WINAPI UnhandledFilter	(_EXCEPTION_POINTERS *pExceptionInfo)
 //		::SetUnhandledExceptionFilter	(UnhandledFilter);	// exception handler to all "unhandled" exceptions
     }
 #else
+typedef int(__cdecl* _PNH)(size_t);
+_CRTIMP int __cdecl _set_new_mode(int);
+_CRTIMP _PNH __cdecl _set_new_handler(_PNH);
 
+#ifdef LEGACY_CODE
 #ifndef USE_BUG_TRAP
 	void _terminate		()
 	{
@@ -703,8 +850,7 @@ LONG WINAPI UnhandledFilter	(_EXCEPTION_POINTERS *pExceptionInfo)
 		string4096				assertion_info;
 		
 		Debug.gather_info			(
-		//gather_info				(
-			"<no expression>",
+        	nullptr,
 			"Unexpected application termination",
 			0,
 			0,
@@ -725,7 +871,7 @@ LONG WINAPI UnhandledFilter	(_EXCEPTION_POINTERS *pExceptionInfo)
 		
 		LPCSTR					endline = "\r\n";
 		LPSTR					buffer = assertion_info + xr_strlen(assertion_info);
-		buffer					+= xr_sprintf(buffer,"Press OK to abort execution%s",endline);
+		buffer					+= xr_sprintf(buffer, sizeof(buffer),"Press OK to abort execution%s",endline);
 
 		MessageBox				(
 			GetTopWindow(NULL),
@@ -738,12 +884,13 @@ LONG WINAPI UnhandledFilter	(_EXCEPTION_POINTERS *pExceptionInfo)
 	//	FATAL					("Unexpected application termination");
 	}
 #endif // USE_BUG_TRAP
+#endif //-LEGACY_CODE
 
 	static void handler_base				(LPCSTR reason_string)
 	{
 		bool							ignore_always = false;
 		Debug.backend					(
-			"error handler is invoked!",
+      		nullptr,
 			reason_string,
 			0,
 			0,
@@ -803,8 +950,8 @@ LONG WINAPI UnhandledFilter	(_EXCEPTION_POINTERS *pExceptionInfo)
 		}
 
 		Debug.backend					(
-			"error handler is invoked!",
 			expression_,
+			"invalid parameter",
 			0,
 			0,
 			file_,

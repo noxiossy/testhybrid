@@ -36,6 +36,14 @@ public:
 	void			fail				(const char *e1, const char *e2, const char *file, int line, const char *function, bool &ignore_always);
 	void			fail				(const char *e1, const char *e2, const char *e3, const char *file, int line, const char *function, bool &ignore_always);
 	void			fail				(const char *e1, const char *e2, const char *e3, const char *e4, const char *file, int line, const char *function, bool &ignore_always);
+    //AVO: print, dont crash
+    void soft_fail(LPCSTR e1, LPCSTR file, int line, LPCSTR function);
+    void soft_fail(LPCSTR e1, const std::string &e2, LPCSTR file, int line, LPCSTR function);
+    void soft_fail(LPCSTR e1, LPCSTR e2, LPCSTR file, int line, LPCSTR function);
+    void soft_fail(LPCSTR e1, LPCSTR e2, LPCSTR e3, LPCSTR file, int line, LPCSTR function);
+    void soft_fail(LPCSTR e1, LPCSTR e2, LPCSTR e3, LPCSTR e4, LPCSTR file, int line, LPCSTR function);
+    void soft_fail(LPCSTR e1, LPCSTR e2, LPCSTR e3, LPCSTR e4, LPCSTR e5, LPCSTR file, int line, LPCSTR function);
+    //-AVO
 	void			error				(long  code, const char* e1, const char *file, int line, const char *function, bool &ignore_always);
 	void			error				(long  code, const char* e1, const char* e2, const char *file, int line, const char *function, bool &ignore_always);
 	void _cdecl		fatal				(const char *file, int line, const char *function, const char* F,...);
