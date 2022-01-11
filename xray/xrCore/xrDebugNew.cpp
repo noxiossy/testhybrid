@@ -675,6 +675,7 @@ void format_message	(LPSTR buffer, const u32 &buffer_size)
 
 #ifndef _EDITOR
     #include <errorrep.h>
+#pragma comment( lib, "faultrep.lib" )
 #endif
 
 #ifdef NO_BUG_TRAP
