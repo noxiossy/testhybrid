@@ -51,7 +51,8 @@ protected:
 												const CCartridge& cartridge,
 												u16 parent_id,
 												u16 weapon_id,
-												bool send_hit);
+												bool send_hit,
+												int iShotNum = 0);
 	void					SetBulletSpeed(float new_speed) {m_fStartBulletSpeed = new_speed;}
 	float					GetBulletSpeed()				{return m_fStartBulletSpeed;}
 
@@ -67,6 +68,8 @@ protected:
 	bool					bWorking;
 
 	float					fOneShotTime;
+	float					fModeShotTime;
+	bool					bCycleDown;
 	Fvector4				fvHitPower;
 	Fvector4				fvHitPowerCritical;
 	float					fHitImpulse;
@@ -110,8 +113,8 @@ public:
 protected:
 	//для сталкеров, чтоб они знали эффективные границы использования 
 	//оружия
-	float					m_fMinRadius;
-	float					m_fMaxRadius;
+	//float					m_fMinRadius;
+	//float					m_fMaxRadius;
 
 protected:
 	Fcolor					light_base_color;

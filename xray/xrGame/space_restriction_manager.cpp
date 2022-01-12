@@ -93,14 +93,14 @@ shared_str	CSpaceRestrictionManager::base_out_restrictions		(ALife::_OBJECT_ID i
 	return							((*I).second.m_base_out_restrictions);
 }
 
-CSpaceRestrictionManager::CRestrictionPtr CSpaceRestrictionManager::restriction	(ALife::_OBJECT_ID id)
+IC	CSpaceRestrictionManager::CRestrictionPtr CSpaceRestrictionManager::restriction	(ALife::_OBJECT_ID id)
 {
 	CLIENT_RESTRICTIONS::iterator	I = m_clients->find(id);
 	VERIFY							(m_clients->end() != I);
 	return							((*I).second.m_restriction);
 }
 
-void CSpaceRestrictionManager::collect_garbage				()
+IC	void CSpaceRestrictionManager::collect_garbage				()
 {
 	SPACE_RESTRICTIONS::iterator	I = m_space_restrictions.begin(), J;
 	SPACE_RESTRICTIONS::iterator	E = m_space_restrictions.end();
@@ -190,7 +190,7 @@ u32	CSpaceRestrictionManager::accessible_nearest			(ALife::_OBJECT_ID id, const 
 	return						(client_restriction->accessible_nearest(position,result));
 }
 
-bool CSpaceRestrictionManager::restriction_presented	(shared_str restrictions, shared_str restriction) const
+IC	bool CSpaceRestrictionManager::restriction_presented	(shared_str restrictions, shared_str restriction) const
 {
 	string4096					m_temp;
 	for (u32 i=0, n=_GetItemCount(*restrictions); i<n; ++i)
@@ -199,7 +199,7 @@ bool CSpaceRestrictionManager::restriction_presented	(shared_str restrictions, s
 	return						(false);
 }
 
-void CSpaceRestrictionManager::join_restrictions		(shared_str &restrictions, shared_str update)
+IC	void CSpaceRestrictionManager::join_restrictions		(shared_str &restrictions, shared_str update)
 {
 	string4096					m_temp1;
 	string4096					m_temp2;

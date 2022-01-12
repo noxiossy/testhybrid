@@ -75,8 +75,15 @@ CScriptGameObject *CScriptGameObject::best_weapon()
 		return			(0);
 	}
 	else {
-		CGameObject		*game_object = object_handler->best_weapon() ? &object_handler->best_weapon()->object() : 0;
-		return			(game_object ? game_object->lua_game_object() : 0);
+		//Alundaio: extra security
+		CGameObject		*game_object = object_handler->best_weapon() ? &object_handler->best_weapon()->object() : NULL;
+		if (!game_object)
+			return (0);
+
+		if (!game_object->H_Parent() || game_object->H_Parent()->ID() != object().ID())
+			return (0);
+		//-Alundaio
+		return (game_object->lua_game_object());
 	}
 }
 
@@ -506,4 +513,31 @@ bool CScriptGameObject::is_there_items_to_pickup	() const
 		return	false;
 	}
 	return (!!stalker->memory().item().selected());
+}
+
+void CScriptGameObject::ResetBoneProtections(LPCSTR imm_sect, LPCSTR bone_sect)
+{
+	CAI_Stalker* stalker = smart_cast<CAI_Stalker*>(&object());
+	if (!stalker)
+		return;
+
+	stalker->ResetBoneProtections(imm_sect,bone_sect);
+}
+
+void CScriptGameObject::set_visual_name(LPCSTR visual)
+{
+	object().cNameVisual_set(visual);
+
+	/*
+	CAI_Stalker* stalker = smart_cast<CAI_Stalker*>(&object());
+	if (!stalker)
+		return;
+
+	stalker->ResetBoneProtections(NULL,NULL);
+	*/
+}
+
+LPCSTR CScriptGameObject::get_visual_name() const
+{
+	return object().cNameVisual().c_str();
 }

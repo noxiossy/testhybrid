@@ -213,7 +213,9 @@ class_<CScriptGameObject> &script_register_game_object2(class_<CScriptGameObject
 		.def("character_icon",				&CScriptGameObject::CharacterIcon)
 		.def("character_rank",				&CScriptGameObject::CharacterRank)
 		.def("set_character_rank",			&CScriptGameObject::SetCharacterRank)
+		.def("change_character_rank",		&CScriptGameObject::ChangeCharacterRank)
 		.def("character_reputation",		&CScriptGameObject::CharacterReputation)
+		.def("set_character_reputation",	&CScriptGameObject::SetCharacterReputation)
 		.def("change_character_reputation",	&CScriptGameObject::ChangeCharacterReputation)
 		.def("character_community",			&CScriptGameObject::CharacterCommunity)
 		.def("set_character_community",		&CScriptGameObject::SetCharacterCommunity)
@@ -236,11 +238,25 @@ class_<CScriptGameObject> &script_register_game_object2(class_<CScriptGameObject
 		]
 
 		//CustomZone
+		.def("set_restrictor_type",			&CScriptGameObject::SetRestrictionType) 
+		.def("get_restrictor_type",			&CScriptGameObject::GetRestrictionType)
 		.def("enable_anomaly",              &CScriptGameObject::EnableAnomaly)
 		.def("disable_anomaly",             &CScriptGameObject::DisableAnomaly)
 		.def("get_anomaly_power",			&CScriptGameObject::GetAnomalyPower)
 		.def("set_anomaly_power",			&CScriptGameObject::SetAnomalyPower)
 
+        .def("get_artefact_health",			&CScriptGameObject::GetArtefactHealthRestoreSpeed)
+        .def("get_artefact_radiation",			&CScriptGameObject::GetArtefactRadiationRestoreSpeed)
+        .def("get_artefact_satiety",			&CScriptGameObject::GetArtefactSatietyRestoreSpeed)
+        .def("get_artefact_power",			&CScriptGameObject::GetArtefactPowerRestoreSpeed)
+        .def("get_artefact_bleeding",			&CScriptGameObject::GetArtefactBleedingRestoreSpeed)        
+
+        .def("set_artefact_health",			&CScriptGameObject::SetArtefactHealthRestoreSpeed)
+        .def("set_artefact_radiation",			&CScriptGameObject::SetArtefactRadiationRestoreSpeed)
+        .def("set_artefact_satiety",			&CScriptGameObject::SetArtefactSatietyRestoreSpeed)
+        .def("set_artefact_power",			&CScriptGameObject::SetArtefactPowerRestoreSpeed)
+        .def("set_artefact_bleeding",			&CScriptGameObject::SetArtefactBleedingRestoreSpeed)
+                                
 		//HELICOPTER
 		.def("get_helicopter",              &CScriptGameObject::get_helicopter)
 		.def("get_car",						&CScriptGameObject::get_car)
@@ -329,6 +345,115 @@ class_<CScriptGameObject> &script_register_game_object2(class_<CScriptGameObject
 		.def("set_level_changer_invitation",&CScriptGameObject::set_level_changer_invitation)
 		.def("start_particles",				&CScriptGameObject::start_particles)
 		.def("stop_particles",				&CScriptGameObject::stop_particles)
+   		//Alundaio: Extended exports
+#ifdef ENABLE_CAR
+		//For Car
+		.def("attach_vehicle", &CScriptGameObject::AttachVehicle)
+		.def("detach_vehicle", &CScriptGameObject::DetachVehicle)
+		.def("get_attached_vehicle", &CScriptGameObject::GetAttachedVehicle)
+#endif
+#ifdef GAME_OBJECT_EXTENDED_EXPORTS
+		.def("reset_bone_protections", &CScriptGameObject::ResetBoneProtections)
+		.def("iterate_feel_touch", &CScriptGameObject::IterateFeelTouch)
+		.def("get_luminocity_hemi", &CScriptGameObject::GetLuminocityHemi)
+		.def("get_luminocity", &CScriptGameObject::GetLuminocity)
+		.def("bone_visible", &CScriptGameObject::IsBoneVisible)
+		.def("set_bone_visible", &CScriptGameObject::SetBoneVisible)
+		.def("set_health_ex", &CScriptGameObject::SetHealthEx)
+		.def("force_set_position", &CScriptGameObject::ForceSetPosition)
+		.def("set_spatial_type", &CScriptGameObject::SetSpatialType)
+		.def("get_spatial_type", &CScriptGameObject::GetSpatialType)
+		//For Ammo
+		.def("ammo_get_count", &CScriptGameObject::AmmoGetCount)
+		.def("ammo_set_count", &CScriptGameObject::AmmoSetCount)
+		.def("ammo_box_size", &CScriptGameObject::AmmoBoxSize)
+		//For Weapons
+		.def("weapon_addon_attach", &CScriptGameObject::Weapon_AddonAttach)
+		.def("weapon_addon_detach", &CScriptGameObject::Weapon_AddonDetach)
+		//For Weapon & Outfit
+		.def("install_upgrade", &CScriptGameObject::InstallUpgrade)
+		.def("has_upgrade", &CScriptGameObject::HasUpgrade)
+		.def("iterate_installed_upgrades", &CScriptGameObject::IterateInstalledUpgrades)
+		.def("weapon_in_grenade_mode", &CScriptGameObject::WeaponInGrenadeMode)
+		// For CHudItem
+		.def("play_hud_motion", &CScriptGameObject::PlayHudMotion)
+		.def("switch_state", &CScriptGameObject::SwitchState)
+		.def("get_state", &CScriptGameObject::GetState)
+		// For EatableItem
+		.def("set_remaining_uses", &CScriptGameObject::SetRemainingUses)
+		.def("get_remaining_uses", &CScriptGameObject::GetRemainingUses)
+		.def("get_max_uses", &CScriptGameObject::GetMaxUses)
+		// Phantom
+		.def("phantom_set_enemy", &CScriptGameObject::PhantomSetEnemy)
+		// Actor
+		.def("set_character_icon", &CScriptGameObject::SetCharacterIcon)
+		//Alundaio: END
+#endif
+#ifdef GAME_OBJECT_TESTING_EXPORTS
+        //AVO: additional functions
+        //.def("is_game_object", &CScriptGameObject::IsGameObject)
+        //.def("is_car", &CScriptGameObject::IsCar)
+        //.def("is_helicopter", &CScriptGameObject::IsHeli)
+        //.def("is_holder", &CScriptGameObject::IsHolderCustom)
+        .def("is_entity_alive", &CScriptGameObject::IsEntityAlive)
+        .def("is_inventory_item", &CScriptGameObject::IsInventoryItem)
+        .def("is_inventory_owner", &CScriptGameObject::IsInventoryOwner)
+        .def("is_actor", &CScriptGameObject::IsActor)
+        .def("is_custom_monster", &CScriptGameObject::IsCustomMonster)
+        .def("is_weapon", &CScriptGameObject::IsWeapon)
+        //.def("is_medkit", &CScriptGameObject::IsMedkit)
+        //.def("is_eatable_item", &CScriptGameObject::IsEatableItem)
+        //.def("is_antirad", &CScriptGameObject::IsAntirad)
+        .def("is_outfit", &CScriptGameObject::IsCustomOutfit)
+        .def("is_scope", &CScriptGameObject::IsScope)
+        .def("is_silencer", &CScriptGameObject::IsSilencer)
+        .def("is_grenade_launcher", &CScriptGameObject::IsGrenadeLauncher)
+        .def("is_weapon_magazined", &CScriptGameObject::IsWeaponMagazined)
+        .def("is_space_restrictor", &CScriptGameObject::IsSpaceRestrictor)
+        .def("is_stalker", &CScriptGameObject::IsStalker)
+        .def("is_anomaly", &CScriptGameObject::IsAnomaly)
+        .def("is_monster", &CScriptGameObject::IsMonster)
+        //.def("is_explosive", &CScriptGameObject::IsExplosive)
+        //.def("is_script_zone", &CScriptGameObject::IsScriptZone)
+        //.def("is_projector", &CScriptGameObject::IsProjector)
+        .def("is_trader", &CScriptGameObject::IsTrader)
+        .def("is_hud_item", &CScriptGameObject::IsHudItem)
+        //.def("is_food_item", &CScriptGameObject::IsFoodItem)
+        .def("is_artefact", &CScriptGameObject::IsArtefact)
+        .def("is_ammo", &CScriptGameObject::IsAmmo)
+        //.def("is_missile", &CScriptGameObject::IsMissile)
+        //.def("is_physics_shell_holder", &CScriptGameObject::IsPhysicsShellHolder)
+        //.def("is_grenade", &CScriptGameObject::IsGrenade)
+        //.def("is_bottle_item", &CScriptGameObject::IsBottleItem)
+        //.def("is_torch", &CScriptGameObject::IsTorch)
+        .def("is_weapon_gl", &CScriptGameObject::IsWeaponGL)
+        .def("is_inventory_box", &CScriptGameObject::IsInventoryBox)
+		.def("is_on_belt", &CScriptGameObject::IsOnBelt)
+		.def("item_on_belt",			&CScriptGameObject::ItemOnBelt) 
+		.def("belt_count",				&CScriptGameObject::BeltSize)  
+        
+
+		.def("get_actor_max_weight",		&CScriptGameObject::GetActorMaxWeight)
+		.def("set_actor_max_weight",		&CScriptGameObject::SetActorMaxWeight)
+		.def("get_actor_max_walk_weight",	&CScriptGameObject::GetActorMaxWalkWeight)
+		.def("set_actor_max_walk_weight",	&CScriptGameObject::SetActorMaxWalkWeight)
+		.def("get_additional_max_weight",		&CScriptGameObject::GetAdditionalMaxWeight)
+		.def("set_additional_max_weight",		&CScriptGameObject::SetAdditionalMaxWeight)
+		.def("get_additional_max_walk_weight",	&CScriptGameObject::GetAdditionalMaxWalkWeight)
+		.def("set_additional_max_walk_weight",	&CScriptGameObject::SetAdditionalMaxWalkWeight)
+		.def("get_total_weight",			&CScriptGameObject::GetTotalWeight)
+		.def("weight",						&CScriptGameObject::Weight)        
+
+		.def("get_actor_jump_speed",		&CScriptGameObject::GetActorJumpSpeed)
+		.def("set_actor_jump_speed",		&CScriptGameObject::SetActorJumpSpeed)
+		.def("get_actor_sprint_koef",		&CScriptGameObject::GetActorSprintKoef)
+		.def("set_actor_sprint_koef",		&CScriptGameObject::SetActorSprintKoef) 
+		.def("get_actor_run_coef",		&CScriptGameObject::GetActorRunCoef)
+		.def("set_actor_run_coef",		&CScriptGameObject::SetActorRunCoef) 
+		.def("get_actor_runback_coef",		&CScriptGameObject::GetActorRunBackCoef)
+		.def("set_actor_runback_coef",		&CScriptGameObject::SetActorRunBackCoef)    
+        //end AVO
+#endif
 
 
 	;return	(instance);

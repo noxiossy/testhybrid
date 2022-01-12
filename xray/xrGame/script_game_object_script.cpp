@@ -91,7 +91,45 @@ void CScriptGameObject::script_register(lua_State *L)
 				value("task_state",					int(GameObject::eTaskStateChange)),
 				value("take_item_from_box",			int(GameObject::eInvBoxItemTake)),
 				value("weapon_no_ammo",				int(GameObject::eWeaponNoAmmoAvailable)),
-				
+
+				//Alundaio:
+				value("hud_animation_end", int(GameObject::eActorHudAnimationEnd)),
+                //AVO: custom callbacks
+                // input
+#ifdef INPUT_CALLBACKS
+                value("key_press",                  int(GameObject::eKeyPress)),
+                value("key_release",                int(GameObject::eKeyRelease)),
+                value("key_hold",                   int(GameObject::eKeyHold)),
+#endif
+#ifdef MOUSE_INPUT_CALLBACKS
+                value("mouse_move",                 int(GameObject::eMouseMove)),
+                value("mouse_wheel",                int(GameObject::eMouseWheel)),
+#endif
+                // actor
+#ifdef ACTOR_BEFORE_DEATH_CALLBACK
+                value("actor_before_death", 		int(GameObject::eActorBeforeDeath)),
+#endif
+                // vehicle
+#ifdef ENABLE_CAR
+				value("on_attach_vehicle", 			int(GameObject::eAttachVehicle)),
+				value("on_detach_vehicle", 			int(GameObject::eDetachVehicle)),
+				value("on_use_vehicle", 			int(GameObject::eUseVehicle)),
+#endif
+#ifdef EXTENDED_WEAPON_CALLBACKS
+				//weapon
+				value("weapon_jammed",				int(GameObject::eOnWeaponJammed)),
+				value("weapon_zoom_in",				int(GameObject::eOnWeaponZoomIn)),
+				value("weapon_zoom_out",			int(GameObject::eOnWeaponZoomOut)),
+				value("weapon_magazine_empty",		int(GameObject::eOnWeaponMagazineEmpty)),
+#endif
+#ifdef EXTENDED_ITEM_CALLBACKS
+				// inventory
+				value("item_to_belt", int(GameObject::eItemToBelt)),
+				value("item_to_slot", int(GameObject::eItemToSlot)),
+				value("item_to_ruck", int(GameObject::eItemToRuck)),
+#endif
+				//-AVO
+                
 				value("map_location_added",			int(GameObject::eMapLocationAdded))
 			],
 

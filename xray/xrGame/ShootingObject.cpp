@@ -11,7 +11,6 @@
 #include "WeaponAmmo.h"
 
 #include "actor.h"
-#include "spectator.h"
 #include "game_cl_base.h"
 #include "level.h"
 #include "level_bullet_manager.h"
@@ -43,6 +42,7 @@ CShootingObject::CShootingObject(void)
 	m_sShellParticles				= NULL;
 	
 	bWorking						= false;
+	bCycleDown = false;
 
 	light_render					= 0;
 
@@ -68,8 +68,21 @@ void CShootingObject::Load	(LPCSTR section)
 
 	//время затрачиваемое на выстрел
 	fOneShotTime			= pSettings->r_float		(section,"rpm");
-	VERIFY(fOneShotTime>0.f);
-	fOneShotTime			= 60.f / fOneShotTime;
+	if(fis_zero(fOneShotTime))
+		fOneShotTime = EPS;
+	//Alundaio: Two-shot burst rpm; used for Abakan/AN-94
+	fModeShotTime = READ_IF_EXISTS(pSettings, r_float, section, "rpm_mode_2", fOneShotTime);
+	fOneShotTime = 60.f / fOneShotTime;
+	fModeShotTime = 60.f / fModeShotTime;
+
+	//Cycle down RPM after first 2 shots; used for Abakan/AN-94
+	if (pSettings->line_exist(section, "cycle_down"))
+	{
+		bCycleDown = pSettings->r_bool(section, "cycle_down")?true:false;
+	}
+	else
+		bCycleDown = false;
+	//Alundaio: END
 
 	LoadFireParams		(section);
 	LoadLights			(section, "");
@@ -214,13 +227,7 @@ void CShootingObject::StartParticles (CParticlesObject*& pParticles, LPCSTR part
 	pParticles = CParticlesObject::Create(particles_name,(BOOL)auto_remove_flag);
 	
 	UpdateParticles(pParticles, pos, vel);
-	CSpectator* tmp_spectr = smart_cast<CSpectator*>(Level().CurrentControlEntity());
 	bool in_hud_mode = IsHudModeNow();
-	if (in_hud_mode && tmp_spectr &&
-		(tmp_spectr->GetActiveCam() != CSpectator::eacFirstEye))
-	{
-		in_hud_mode = false;
-	}
 	pParticles->Play(in_hud_mode);
 }
 void CShootingObject::StopParticles (CParticlesObject*&	pParticles)
@@ -300,13 +307,7 @@ void CShootingObject::OnShellDrop	(const Fvector& play_pos,
 	particles_pos.c.set		(play_pos);
 
 	pShellParticles->UpdateParent		(particles_pos, parent_vel);
-	CSpectator* tmp_spectr = smart_cast<CSpectator*>(Level().CurrentControlEntity());
 	bool in_hud_mode = IsHudModeNow();
-	if (in_hud_mode && tmp_spectr &&
-		(tmp_spectr->GetActiveCam() != CSpectator::eacFirstEye))
-	{
-		in_hud_mode = false;
-	}
 	pShellParticles->Play(in_hud_mode);
 }
 
@@ -336,17 +337,8 @@ void CShootingObject::StartFlameParticles	()
 	m_pFlameParticles = CParticlesObject::Create(*m_sFlameParticlesCurrent,FALSE);
 	UpdateFlameParticles();
 	
-	
-	CSpectator* tmp_spectr = smart_cast<CSpectator*>(Level().CurrentControlEntity());
 	bool in_hud_mode = IsHudModeNow();
-	if (in_hud_mode && tmp_spectr &&
-		(tmp_spectr->GetActiveCam() != CSpectator::eacFirstEye))
-	{
-		in_hud_mode = false;
-	}
 	m_pFlameParticles->Play(in_hud_mode);
-		
-
 }
 void CShootingObject::StopFlameParticles	()
 {
@@ -442,7 +434,7 @@ void CShootingObject::FireBullet(const Fvector& pos,
 								 const CCartridge& cartridge,
 								 u16 parent_id,
 								 u16 weapon_id,
-								 bool send_hit)
+								 bool send_hit, int iShotNum)
 {
 	Fvector dir;
 	random_dir(dir,shot_dir,fire_disp);
@@ -486,14 +478,7 @@ void CShootingObject::FireBullet(const Fvector& pos,
 	float l_fHitPower = 0.0f;
 	if (ParentIsActor())//если из оружия стреляет актёр(игрок)
 	{
-		if (GameID() == eGameIDSingle)
-		{
-			l_fHitPower			= fvHitPower[g_SingleGameDifficulty];
-		}
-		else
-		{
-			l_fHitPower			= fvHitPower[egdMaster];
-		}
+		l_fHitPower			= fvHitPower[g_SingleGameDifficulty];
 	}
 	else
 	{
@@ -512,7 +497,8 @@ void CShootingObject::FireBullet(const Fvector& pos,
 										cartridge, 
 										m_air_resistance_factor,
 										send_hit, 
-										aim_bullet);
+										aim_bullet,
+										iShotNum);
 }
 void CShootingObject::FireStart	()
 {

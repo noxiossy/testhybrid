@@ -19,6 +19,7 @@
 #include "UI/UIDialogWnd.h"
 #include "date_time.h"
 #include "ai_space.h"
+#include "script_engine.h"
 #include "level_graph.h"
 #include "PHCommander.h"
 #include "PHScriptCall.h"
@@ -36,6 +37,11 @@
 #include "ui/UIInventoryUtilities.h"
 #include "alife_object_registry.h"
 #include "xrServer_Objects_ALife_Monsters.h"
+#include "hudmanager.h"
+#include "relation_registry.h"
+
+#include "raypick.h"
+#include "../xrcdb/xr_collide_defs.h"
 
 using namespace luabind;
 
@@ -600,8 +606,6 @@ void set_pp_effector_factor2(int id, float f)
 	if(pp) pp->SetCurrentFactor(f);
 }
 
-#include "relation_registry.h"
-
 int g_community_goodwill(LPCSTR _community, int _entity_id)
  {
 	 CHARACTER_COMMUNITY c;
@@ -704,7 +708,99 @@ bool has_active_tutotial()
 	return (g_tutorial!=NULL);
 }
 
+//Alundaio: namespace level exports extension
+#ifdef NAMESPACE_LEVEL_EXPORTS
+//ability to update level netpacket
+void g_send(NET_Packet& P, bool bReliable = 0, bool bSequential = 1, bool bHighPriority = 0, bool bSendImmediately = 0)
+{
+	Level().Send(P,net_flags(bReliable,bSequential,bHighPriority,bSendImmediately));
+}
 
+void u_event_gen(NET_Packet& P, u32 _event, u32 _dest)
+{
+	CGameObject::u_EventGen(P, _event, _dest);
+}
+
+void u_event_send(NET_Packet& P)
+{
+	CGameObject::u_EventSend(P);
+}
+
+//can spawn entities like bolts, phantoms, ammo, etc. which normally crash when using alife():create()
+void spawn_section(LPCSTR sSection, Fvector3 vPosition, u32 LevelVertexID, u16 ParentID, bool bReturnItem=false)
+{
+	Level().spawn_item(sSection, vPosition, LevelVertexID, ParentID, bReturnItem);
+}
+
+//ability to get the target game_object at crosshair
+CScriptGameObject* g_get_target_obj()
+{
+	collide::rq_result& RQ = HUD().GetCurrentRayQuery();
+	if (RQ.O)
+	{
+		CGameObject	*game_object = static_cast<CGameObject*>(RQ.O);
+		if (game_object)
+			return game_object->lua_game_object();
+	}
+	return (0);
+}
+
+float g_get_target_dist()
+{
+	collide::rq_result& RQ = HUD().GetCurrentRayQuery();
+	if (RQ.range)
+		return RQ.range;
+	return (0);
+}
+
+u32 g_get_target_element()
+{
+	collide::rq_result& RQ = HUD().GetCurrentRayQuery();
+	if (RQ.element)
+	{
+		return RQ.element;
+	}
+	return (0);
+}
+
+u8 get_active_cam()
+{
+	CActor* actor = smart_cast<CActor*>(Level().CurrentViewEntity());
+	if (actor)
+		return (u8)actor->active_cam();
+
+	return 255;
+}
+
+void set_active_cam(u8 mode)
+{
+	CActor* actor = smart_cast<CActor*>(Level().CurrentViewEntity());
+	if (actor && mode <= ACTOR_DEFS::EActorCameras::eacMaxCam)
+		actor->cam_Set((ACTOR_DEFS::EActorCameras)mode);
+}
+#endif
+//-Alundaio
+
+// KD: raypick	
+bool ray_pick (const Fvector& start, const Fvector& dir, float range, collide::rq_target tgt, script_rq_result& script_R, CScriptGameObject* ignore_object)
+{
+  collide::rq_result		R;
+  CObject *ignore = NULL;
+  if (ignore_object)
+    ignore = smart_cast<CObject *>(&(ignore_object->object())); 	
+  if (Level().ObjectSpace.RayPick		(start, dir, range, tgt, R, ignore))
+	{
+	   script_R.set(R);
+	   return true;
+	}
+	else
+	   return false;
+}
+
+xrTime get_start_time()
+{
+	return (xrTime(Level().GetStartGameTime()));
+}
 
 #pragma optimize("s",on)
 void CLevel::script_register(lua_State *L)
@@ -718,6 +814,20 @@ void CLevel::script_register(lua_State *L)
 
 	module(L,"level")
 	[
+		//Alundaio: Extend level namespace exports
+#ifdef NAMESPACE_LEVEL_EXPORTS
+		def("u_event_gen", &u_event_gen), //Send events via packet
+		def("u_event_send", &u_event_send),
+		def("send", &g_send), //allow the ability to send netpacket to level
+		def("get_target_obj", &g_get_target_obj), //intentionally named to what is in xray extensions
+		def("get_target_dist", &g_get_target_dist),
+		def("get_target_element", &g_get_target_element), //Can get bone cursor is targetting
+		def("spawn_item", &spawn_section),
+		def("get_active_cam", &get_active_cam),
+		def("set_active_cam", &set_active_cam),
+		def("get_start_time", &get_start_time),
+#endif
+		//Alundaio: END
 		// obsolete\deprecated
 		def("object_by_id",						get_object_by_id),
 #ifdef DEBUG
@@ -804,7 +914,8 @@ void CLevel::script_register(lua_State *L)
 		
 		def("vertex_id",						&vertex_id),
 
-		def("game_id",							&GameID)
+		def("game_id",							&GameID),
+    	def("ray_pick", &ray_pick)    
 	],
 	
 	module(L,"actor_stats")
@@ -813,6 +924,38 @@ void CLevel::script_register(lua_State *L)
 		def("add_points_str",					&add_actor_points_str),
 		def("get_points",						&get_actor_points)
 	];
+ 	module(L)
+	[
+	   class_<CRayPick>("ray_pick")
+	   .def(								constructor<>())
+	   .def(								constructor<Fvector&, Fvector&, float, collide::rq_target, CScriptGameObject*>())
+	   .def("set_position",				&CRayPick::set_position)
+	   .def("set_direction",				&CRayPick::set_direction)
+	   .def("set_range",					&CRayPick::set_range)
+	   .def("set_flags",					&CRayPick::set_flags)
+	   .def("set_ignore_object",			&CRayPick::set_ignore_object)
+	   .def("query",						&CRayPick::query)
+	   .def("get_result",					&CRayPick::get_result)
+	   .def("get_object",					&CRayPick::get_object)
+	   .def("get_distance",				&CRayPick::get_distance)
+	   .def("get_element",					&CRayPick::get_element),	
+    class_<script_rq_result>("rq_result")
+      .def_readonly("object",			&script_rq_result::O)
+      .def_readonly("range",			&script_rq_result::range)
+      .def_readonly("element",		&script_rq_result::element)
+      .def(								constructor<>()), 	
+    class_<enum_exporter<collide::rq_target> >("rq_target")
+      .enum_("targets")
+    [
+      value("rqtNone",						int(collide::rqtNone)),
+      value("rqtObject",						int(collide::rqtObject)),
+      value("rqtStatic",						int(collide::rqtStatic)),
+      value("rqtShape",						int(collide::rqtShape)),
+      value("rqtObstacle",					int(collide::rqtObstacle)),
+      value("rqtBoth",						int(collide::rqtBoth)),
+      value("rqtDyn",							int(collide::rqtDyn))
+    ]
+	];  
 
 	module(L)
 	[

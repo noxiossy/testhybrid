@@ -17,6 +17,8 @@
 #include "game_cl_base.h"
 
 #include "../xrEngine/x_ray.h"
+#include "ui\UICellItem.h" //Alundaio
+//#include "script_game_object.h" //Alundaio
 
 EGameIDs ParseStringToGameType(LPCSTR str);
 
@@ -195,6 +197,35 @@ void CUIGameCustom::HideActorMenu()
 	}
 }
 
+//Alundaio:
+void CUIGameCustom::UpdateActorMenu()
+{
+	if (m_ActorMenu->IsShown())
+	{
+		m_ActorMenu->UpdateActor();
+		m_ActorMenu->RefreshCurrentItemCell();
+	}
+}
+
+CScriptGameObject* CUIGameCustom::CurrentItemAtCell()
+{
+	CUICellItem* itm = m_ActorMenu->CurrentItem();
+	if (!itm->m_pData)
+		return (0);
+
+	PIItem IItm = (PIItem)itm->m_pData;
+	if (!IItm)
+		return (0);
+
+	CGameObject* GO = smart_cast<CGameObject*>(IItm);
+
+	if (GO)
+		return GO->lua_game_object();
+
+	return (0);
+}
+//-Alundaio
+
 void CUIGameCustom::HideMessagesWindow()
 {
 	if ( m_pMessagesWnd->IsShown() )
@@ -210,8 +241,12 @@ void CUIGameCustom::ShowMessagesWindow()
 bool CUIGameCustom::ShowPdaMenu()
 {
 	HideActorMenu();
-	m_PdaMenu->ShowDialog(true);
-	return true;
+	if (!m_PdaMenu->IsShown())
+	{
+		m_PdaMenu->ShowDialog(true);
+		return true;
+	}
+    return false;
 }
 
 void CUIGameCustom::HidePdaMenu()
