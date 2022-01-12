@@ -28,6 +28,10 @@ protected:
 	ESoundTypes		m_eSoundShot;
 	ESoundTypes		m_eSoundEmptyClick;
 	ESoundTypes		m_eSoundReload;
+#ifdef NEW_SOUNDS //AVO: new sounds go here
+    ESoundTypes		m_eSoundReloadEmpty;
+    ESoundTypes		m_eSoundReloadMisfire;
+#endif //-NEW_SOUNDS
 	bool			m_sounds_enabled;
 	// General
 	//кадр момента пересчета UpdateSounds
@@ -140,7 +144,15 @@ public:
 			void	OnNextFireMode		();
 			void	OnPrevFireMode		();
 			bool	HasFireModes		() { return m_bHasDifferentFireModes; };
-	virtual	int		GetCurrentFireMode	() { return m_aFireModes[m_iCurFireMode]; };	
+    virtual	int		GetCurrentFireMode()
+    {
+        //AVO: fixed crash due to original GSC assumption that CWeaponMagazined will always have firemodes specified in configs.
+        //return m_aFireModes[m_iCurFireMode];
+        if (HasFireModes())
+            return m_aFireModes[m_iCurFireMode];
+        else
+            return 1;
+    };
 
 	virtual void	save				(NET_Packet &output_packet);
 	virtual void	load				(IReader &input_packet);
@@ -171,5 +183,12 @@ protected:
 										 u16 parent_id,
 										 u16 weapon_id,
 										 bool send_hit);
+    //AVO: for custom added sounds check if sound exists
+    bool WeaponSoundExist(LPCSTR section, LPCSTR sound_name);
 
+	//Alundaio: LAYERED_SND_SHOOT
+#ifdef LAYERED_SND_SHOOT
+	HUD_SOUND_COLLECTION_LAYERED m_layered_sounds;
+#endif
+	//-Alundaio
 };

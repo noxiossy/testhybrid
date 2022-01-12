@@ -460,11 +460,14 @@ void CWeapon::Load		(LPCSTR section)
 
 	Fvector			def_dof;
 	def_dof.set		(-1,-1,-1);
-//	m_zoom_params.m_ZoomDof		= READ_IF_EXISTS(pSettings, r_fvector3, section, "zoom_dof", Fvector().set(-1,-1,-1));
-//	m_zoom_params.m_bZoomDofEnabled	= !def_dof.similar(m_zoom_params.m_ZoomDof);
+    m_zoom_params.m_ZoomDof = READ_IF_EXISTS(pSettings, r_fvector3, section, "zoom_dof", Fvector().set(-1, -1, -1));
+    m_zoom_params.m_bZoomDofEnabled = !def_dof.similar(m_zoom_params.m_ZoomDof);
 
-//	m_zoom_params.m_ReloadDof	= READ_IF_EXISTS(pSettings, r_fvector4, section, "reload_dof", Fvector4().set(-1,-1,-1,-1));
+    m_zoom_params.m_ReloadDof = READ_IF_EXISTS(pSettings, r_fvector4, section, "reload_dof", Fvector4().set(-1, -1, -1, -1));
 
+    //Swartz: empty reload
+    m_zoom_params.m_ReloadEmptyDof = READ_IF_EXISTS(pSettings, r_fvector4, section, "reload_empty_dof", Fvector4().set(-1, -1, -1, -1));
+    //-Swartz
 
 	m_bHasTracers			= !!READ_IF_EXISTS(pSettings, r_bool, section, "tracers", true);
 	m_u8TracerColorID		= READ_IF_EXISTS(pSettings, r_u8, section, "tracers_color_ID", u8(-1));
@@ -480,6 +483,9 @@ void CWeapon::Load		(LPCSTR section)
 	m_zoom_params.m_bUseDynamicZoom				= READ_IF_EXISTS(pSettings,r_bool,section,"scope_dynamic_zoom",FALSE);
 	m_zoom_params.m_sUseZoomPostprocess			= 0;
 	m_zoom_params.m_sUseBinocularVision			= 0;
+
+	// Added by Axel, to enable optional condition use on any item
+	m_flags.set( FUsingCondition, READ_IF_EXISTS( pSettings, r_bool, section, "use_condition", TRUE ));
 }
 
 void CWeapon::LoadFireParams		(LPCSTR section)
@@ -1374,9 +1380,8 @@ void CWeapon::OnZoomIn()
 
 	EnableHudInertion					(FALSE);
 
-	
-	//if(m_zoom_params.m_bZoomDofEnabled && !IsScopeAttached())
-	//	GamePersistent().SetEffectorDOF	(m_zoom_params.m_ZoomDof);
+    if (m_zoom_params.m_bZoomDofEnabled && !IsScopeAttached())
+        GamePersistent().SetEffectorDOF(m_zoom_params.m_ZoomDof);
 
 	if(GetHUDmode())
 		GamePersistent().SetPickableEffectorDOF(true);
@@ -1404,7 +1409,7 @@ void CWeapon::OnZoomOut()
 	m_zoom_params.m_fCurrentZoomFactor	= g_fov;
 	EnableHudInertion					(TRUE);
 
-// 	GamePersistent().RestoreEffectorDOF	();
+    GamePersistent().RestoreEffectorDOF();
 
 	if(GetHUDmode())
 		GamePersistent().SetPickableEffectorDOF(false);
@@ -1632,6 +1637,14 @@ const CInventoryItem *CWeapon::can_kill	(const xr_vector<const CGameObject*> &it
 
 bool CWeapon::ready_to_kill	() const
 {
+	//Alundaio
+	const CInventoryOwner* io = smart_cast<const CInventoryOwner*>(H_Parent());
+	if (!io)
+		return false;
+
+	if (io->inventory().ActiveItem() == NULL || io->inventory().ActiveItem()->object().ID() != ID())
+		return false; 
+	//-Alundaio
 	return					(
 		!IsMisfire() && 
 		((GetState() == eIdle) || (GetState() == eFire) || (GetState() == eFire2)) && 
@@ -1857,15 +1870,27 @@ void CWeapon::OnStateSwitch	(u32 S)
 	inherited::OnStateSwitch(S);
 	m_BriefInfo_CalcFrame = 0;
 
-	//if(GetState()==eReload)
-	//{
-	//	if(H_Parent()==Level().CurrentEntity() && !fsimilar(m_zoom_params.m_ReloadDof.w,-1.0f))
-	//	{
-	//		CActor* current_actor	= smart_cast<CActor*>(H_Parent());
-	//		if (current_actor)
-	//			current_actor->Cameras().AddCamEffector(xr_new<CEffectorDOF>(m_zoom_params.m_ReloadDof) );
-	//	}
-	//}
+    if (GetState() == eReload)
+    {
+        if (iAmmoElapsed == 0) //Swartz: re-written to use reload empty DOF
+        {
+            if (H_Parent() == Level().CurrentEntity() && !fsimilar(m_zoom_params.m_ReloadEmptyDof.w, -1.0f))
+            {
+                CActor* current_actor = smart_cast<CActor*>(H_Parent());
+                if (current_actor)
+                    current_actor->Cameras().AddCamEffector(xr_new<CEffectorDOF>(m_zoom_params.m_ReloadEmptyDof));
+            }
+        }
+        else
+        {
+            if (H_Parent() == Level().CurrentEntity() && !fsimilar(m_zoom_params.m_ReloadDof.w, -1.0f))
+            {
+                CActor* current_actor = smart_cast<CActor*>(H_Parent());
+                if (current_actor)
+                    current_actor->Cameras().AddCamEffector(xr_new<CEffectorDOF>(m_zoom_params.m_ReloadDof));
+            }
+        }
+    }
 }
 
 void CWeapon::OnAnimationEnd(u32 state) 

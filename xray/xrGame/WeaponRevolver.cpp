@@ -1,37 +1,37 @@
 #include "stdafx.h"
-#include "weaponpistol.h"
+#include "weaponrevolver.h"
 #include "ParticlesObject.h"
 #include "actor.h"
 
-CWeaponPistol::CWeaponPistol()
+CWeaponRevolver::CWeaponRevolver()
 {
 	m_eSoundClose		= ESoundTypes(SOUND_TYPE_WEAPON_RECHARGING);
 	SetPending			(FALSE);
 }
 
-CWeaponPistol::~CWeaponPistol(void)
+CWeaponRevolver::~CWeaponRevolver(void)
 {
 }
 
-void CWeaponPistol::net_Destroy()
+void CWeaponRevolver::net_Destroy()
 {
 	inherited::net_Destroy();
 }
 
 
-void CWeaponPistol::Load	(LPCSTR section)
+void CWeaponRevolver::Load	(LPCSTR section)
 {
 	inherited::Load		(section);
 
 	m_sounds.LoadSound(section, "snd_close", "sndClose", false, m_eSoundClose);
 }
 
-void CWeaponPistol::OnH_B_Chield		()
+void CWeaponRevolver::OnH_B_Chield		()
 {
 	inherited::OnH_B_Chield		();
 }
 
-void CWeaponPistol::PlayAnimShow	()
+void CWeaponRevolver::PlayAnimShow	()
 {
 	VERIFY(GetState()==eShowing);
 
@@ -41,7 +41,7 @@ void CWeaponPistol::PlayAnimShow	()
 		inherited::PlayAnimShow();
 }
 
-void CWeaponPistol::PlayAnimBore()
+void CWeaponRevolver::PlayAnimBore()
 {
 	if(iAmmoElapsed==0)
 		PlayHUDMotion	("anm_bore_empty", TRUE, this, GetState());
@@ -49,7 +49,7 @@ void CWeaponPistol::PlayAnimBore()
 		inherited::PlayAnimBore();
 }
 
-void CWeaponPistol::PlayAnimIdleSprint()
+void CWeaponRevolver::PlayAnimIdleSprint()
 {
 	if(iAmmoElapsed==0)
 	{
@@ -59,7 +59,7 @@ void CWeaponPistol::PlayAnimIdleSprint()
 	}
 }
 
-void CWeaponPistol::PlayAnimIdleMoving()
+void CWeaponRevolver::PlayAnimIdleMoving()
 {
 	if(iAmmoElapsed==0)
 	{
@@ -70,7 +70,7 @@ void CWeaponPistol::PlayAnimIdleMoving()
 }
 
 
-void CWeaponPistol::PlayAnimIdle()
+void CWeaponRevolver::PlayAnimIdle()
 {
 	if (TryPlayAnimIdle()) return;
 
@@ -82,7 +82,7 @@ void CWeaponPistol::PlayAnimIdle()
 	}
 }
 
-void CWeaponPistol::PlayAnimAim()
+void CWeaponRevolver::PlayAnimAim()
 {
 	if(iAmmoElapsed==0)
 		PlayHUDMotion("anm_idle_aim_empty", TRUE, NULL, GetState());
@@ -90,20 +90,27 @@ void CWeaponPistol::PlayAnimAim()
 		inherited::PlayAnimAim();
 }
 
-void CWeaponPistol::PlayAnimReload()
+void CWeaponRevolver::PlayAnimReload()
 {	
-    /*VERIFY(GetState() == eReload);
-	if(iAmmoElapsed==0)
+	VERIFY(GetState()==eReload);
+	if(iAmmoElapsed==1)
 	{
-		PlayHUDMotion("anm_reload_empty", TRUE, this, GetState());
+		PlayHUDMotion("anm_reload_1", TRUE, this, GetState());
+	}else if(iAmmoElapsed==2){
+		PlayHUDMotion("anm_reload_2", TRUE, this, GetState());
+	}else if(iAmmoElapsed==3){
+		PlayHUDMotion("anm_reload_3", TRUE, this, GetState());
+	}else if(iAmmoElapsed==4){
+		PlayHUDMotion("anm_reload_4", TRUE, this, GetState());
+	}else if(iAmmoElapsed==5){
+		PlayHUDMotion("anm_reload_5", TRUE, this, GetState());
 	}else{
-		PlayHUDMotion("anm_reload", TRUE, this, GetState());
-    }*/
-    inherited::PlayAnimReload(); //AVO: refactored to use grand-parent (CWeaponMagazined) function
+		PlayHUDMotion("anm_reload", TRUE, this, GetState());                
+	}
 }
 
 
-void CWeaponPistol::PlayAnimHide()
+void CWeaponRevolver::PlayAnimHide()
 {
 	VERIFY(GetState()==eHiding);
 	if(iAmmoElapsed==0) 
@@ -115,7 +122,7 @@ void CWeaponPistol::PlayAnimHide()
 		inherited::PlayAnimHide();
 }
 
-void CWeaponPistol::PlayAnimShoot	()
+void CWeaponRevolver::PlayAnimShoot	()
 {
 	VERIFY(GetState()==eFire);
 	if(iAmmoElapsed > 1) 
@@ -129,22 +136,22 @@ void CWeaponPistol::PlayAnimShoot	()
 }
 
 
-void CWeaponPistol::switch2_Reload()
+void CWeaponRevolver::switch2_Reload()
 {
 	inherited::switch2_Reload();
 }
 
-void CWeaponPistol::OnAnimationEnd(u32 state)
+void CWeaponRevolver::OnAnimationEnd(u32 state)
 {
 	inherited::OnAnimationEnd(state);
 }
 
-void CWeaponPistol::OnShot		()
+void CWeaponRevolver::OnShot		()
 {
 	inherited::OnShot(); //Alundaio: not changed from inherited, so instead of copying changes from weaponmagazined, we just do this
 }
 
-void CWeaponPistol::UpdateSounds()
+void CWeaponRevolver::UpdateSounds()
 {
 	inherited::UpdateSounds();
 	m_sounds.SetPosition("sndClose", get_LastFP());

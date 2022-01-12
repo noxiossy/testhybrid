@@ -2488,6 +2488,93 @@
     <Filter Include="Physics\scripts">
       <UniqueIdentifier>{16b9df67-87a0-43f9-8d0e-304216b3b2bc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Class Diagrams">
+      <UniqueIdentifier>{3c08723e-1b59-45e4-958f-3a1c5590cfa9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states">
+      <UniqueIdentifier>{2f5dd1ce-9927-4917-a6fa-6b0113f79b00}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\Rest">
+      <UniqueIdentifier>{69fc9311-024d-451f-bcad-8a5b05ba9ba8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\Panic">
+      <UniqueIdentifier>{f76b9f11-e049-4117-be33-eb90695baee0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\Interesting Sound">
+      <UniqueIdentifier>{3f0f8bce-f527-47da-86e3-6547a08ff9c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\Attack">
+      <UniqueIdentifier>{917f2215-4fe0-49cd-9710-ad42d4bbf980}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\Hitted">
+      <UniqueIdentifier>{d21c6f37-aa25-425f-ab15-dd85562e4dac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\Steal">
+      <UniqueIdentifier>{2fa0f717-0403-4c7e-ad7f-2530a88eb71c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\Steal\Squad">
+      <UniqueIdentifier>{fae29cab-3d66-4aba-8a69-75b6d84dc74d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\Steal\Squad\Rest">
+      <UniqueIdentifier>{4946196d-1f2b-4e07-9207-f0789b2528fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\Hunt">
+      <UniqueIdentifier>{098ea533-6ac0-45d2-87d0-f7b07721ed96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\Home Point">
+      <UniqueIdentifier>{db21b3a4-109b-4ee8-a49c-f514367ae3a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\Help Sound">
+      <UniqueIdentifier>{986484e0-dae7-4668-9bac-99821ec28ed8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\ALife">
+      <UniqueIdentifier>{ac2feaf9-e056-41bf-ba53-48ee2f244e10}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\Group Monsters Home">
+      <UniqueIdentifier>{a5d2eea2-ff2a-4205-9aa4-662793385c62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\Find Enemy">
+      <UniqueIdentifier>{d8f01b6a-bd7d-4d92-836b-7da8f0719f2e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\Eat">
+      <UniqueIdentifier>{d98d5aed-0349-4cd2-a98e-aa8828cae8ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\Eat\Eating">
+      <UniqueIdentifier>{c71ab8da-df07-42c0-8a59-79de3f0e0be8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\Eat\Drag">
+      <UniqueIdentifier>{c0671f30-b395-4aaa-b068-48ad750e6229}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\General">
+      <UniqueIdentifier>{786a1168-d1fe-400c-94dd-34b3b7c73b07}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\General\Movement">
+      <UniqueIdentifier>{20b3de5c-c8dd-4115-9638-50e8108ffcfa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\General\Look">
+      <UniqueIdentifier>{da4c1a2f-7fc9-48ac-8335-2fbc70053f19}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\General\Custom Action">
+      <UniqueIdentifier>{509e0ea6-e30e-453c-bf81-20f77ddc1b9a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\General\Test">
+      <UniqueIdentifier>{be8f072a-a4a2-4eb8-b5c0-c33397f263cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\Dangerous Sound">
+      <UniqueIdentifier>{bc35ae2d-65bf-4008-bc50-c26fdad27d6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\Camp">
+      <UniqueIdentifier>{e3f6cc93-c7c7-4f59-b334-e90f6870dd1b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AI\AMonsters\common\script\monster states\Controlled">
+      <UniqueIdentifier>{71df3723-4ad3-4db1-9eb8-7bf643a66f93}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Client\Objects\zones\Ameba">
+      <UniqueIdentifier>{7111b5cd-588d-46ec-81c2-ccc6c70fa4de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI\Common\PDA\Encylopedia">
+      <UniqueIdentifier>{73dc453e-a9d1-4200-83b7-3564dbf9fc80}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mt_config.h">
@@ -6735,6 +6822,9 @@
     <ClInclude Include="ui\UIAchievements.h">
       <Filter>UI\Common\PDA\Statistics &amp; Rankings</Filter>
     </ClInclude>
+    <ClInclude Include="ui\UIRankingsCoC.h">
+      <Filter>UI\Common\PDA\Statistics &amp; Rankings</Filter>
+    </ClInclude>
     <ClInclude Include="ui\UIRankingWnd.h">
       <Filter>UI\Common\PDA\Statistics &amp; Rankings</Filter>
     </ClInclude>
@@ -7377,6 +7467,16 @@
     <ClInclude Include="physics_world_scripted.h">
       <Filter>Physics\scripts</Filter>
     </ClInclude>
+    <ClInclude Include="WeaponCustomAuto.h">
+      <Filter>Core\Client\Objects\items &amp; weapons\Weapons\Custom Weapon\Pistol</Filter>
+    </ClInclude>
+    <ClInclude Include="WeaponRevolver.h">
+      <Filter>Core\Client\Objects\items &amp; weapons\Weapons\Custom Weapon\Pistol</Filter>
+    </ClInclude>
+    <ClInclude Include="AmebaZone.h">
+      <Filter>Core\Client\Objects\zones\Ameba</Filter>
+    </ClInclude>
+    <ClInclude Include="HolderEntityObject.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="damage_manager.cpp">
@@ -10334,6 +10434,9 @@
     <ClCompile Include="ui\UIRankFraction.cpp">
       <Filter>UI\Common\PDA\Statistics &amp; Rankings</Filter>
     </ClCompile>
+    <ClCompile Include="ui\UIRankingsCoC.cpp">
+      <Filter>UI\Common\PDA\Statistics &amp; Rankings</Filter>
+    </ClCompile>
     <ClCompile Include="ui\UIRankingWnd.cpp">
       <Filter>UI\Common\PDA\Statistics &amp; Rankings</Filter>
     </ClCompile>
@@ -11024,6 +11127,19 @@
     <ClCompile Include="physics_world_scripted.cpp">
       <Filter>Physics\scripts</Filter>
     </ClCompile>
+    <ClCompile Include="WeaponCustomAuto.cpp">
+      <Filter>Core\Client\Objects\items &amp; weapons\Weapons\Custom Weapon\Pistol</Filter>
+    </ClCompile>
+    <ClCompile Include="WeaponRevolver.cpp">
+      <Filter>Core\Client\Objects\items &amp; weapons\Weapons\Custom Weapon\Pistol</Filter>
+    </ClCompile>
+    <ClCompile Include="raypick.cpp">
+      <Filter>Core\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="AmebaZone.cpp">
+      <Filter>Core\Client\Objects\zones\Ameba</Filter>
+    </ClCompile>
+    <ClCompile Include="HolderEntityObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="ai\monsters\chimera\chimera_attack_state.h">
@@ -11044,5 +11160,13 @@
     <CustomBuild Include="ui\UIRankFaction.h">
       <Filter>UI\Common\PDA\Statistics &amp; Rankings</Filter>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Weapons.cd">
+      <Filter>Class Diagrams</Filter>
+    </None>
+    <None Include="Players.cd">
+      <Filter>Class Diagrams</Filter>
+    </None>
   </ItemGroup>
 </Project>
