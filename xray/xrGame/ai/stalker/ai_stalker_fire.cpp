@@ -54,6 +54,7 @@
 #include "../../trajectories.h"
 
 using namespace StalkerSpace;
+using namespace luabind;
 
 static float const DANGER_DISTANCE			= 3.f;
 static u32	 const DANGER_INTERVAL			= 120000;
@@ -370,7 +371,22 @@ void CAI_Stalker::update_best_item_info	()
 void CAI_Stalker::update_best_item_info_impl()
 {
 
+	luabind::functor<CScriptGameObject*> funct;
+	if (ai().script_engine().functor("ai_stalker.update_best_weapon", funct))
+	{
+		CGameObject* cur_itm = smart_cast<CGameObject*>(m_best_item_to_kill);
+		CScriptGameObject* GO = funct(this->lua_game_object(),cur_itm ? cur_itm->lua_game_object() : NULL);
+		CInventoryItem* bw = GO ? smart_cast<CInventoryItem*>(&GO->object()): NULL;
+		if (bw)
+		{
+			m_best_item_to_kill = bw;
+			m_best_ammo = bw;
+			return;
+		}
+	}
+
 	ai().ef_storage().alife_evaluation(false);
+	/* Alundaio: This is what causes stalkers to switch weapons during combat; It's stupid
 	if	(
 			m_item_actuality &&
 			m_best_item_to_kill &&
@@ -388,6 +404,7 @@ void CAI_Stalker::update_best_item_info_impl()
 		if (fsimilar(value,m_best_item_value))
 			return;
 	}
+	*/
 
 	// initialize parameters
 	m_item_actuality							= true;

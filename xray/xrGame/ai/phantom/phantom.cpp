@@ -72,6 +72,8 @@ BOOL CPhantom::net_Spawn(CSE_Abstract* DC)
 
 	SwitchToState		(stBirth);			// initial state (changed on load method in inherited::)
 
+	OBJ->set_killer_id(u16(-1)); // Alundaio: Hack to prevent strange crash with dynamic phantoms
+	
 	// inherited
 	if (!inherited::net_Spawn(DC)) return FALSE;
 	
@@ -131,6 +133,9 @@ void CPhantom::animation_end_callback(CBlend* B)
 //---------------------------------------------------------------------
 void CPhantom::SwitchToState_internal(EState new_state)
 {
+	if (!m_enemy)
+		m_enemy = Level().CurrentEntity();
+
 	if (new_state!=m_CurState){
 		IKinematicsAnimated *K	= smart_cast<IKinematicsAnimated*>(Visual());
 		Fmatrix	xform			= XFORM_center	();
@@ -222,6 +227,9 @@ void CPhantom::OnDeadState()
 }
 void CPhantom::UpdateFlyMedia()
 {
+	if (!m_enemy)
+		m_enemy = Level().CurrentEntity();
+
 	UpdatePosition	(m_enemy->Position());
 	Fmatrix	xform			= XFORM_center();
 	// update particles
@@ -259,7 +267,7 @@ void	CPhantom::Hit							(SHit* pHDS)
 {
 	if (m_TgtState==stFly)	SwitchToState(stShoot);
 	if (g_Alive()){
-		SetfHealth		(-1.f);
+//		SetfHealth		(-1.f);
 //		inherited::Hit	(P,dir,who,element,p_in_object_space,impulse/100.f, hit_type);
 		inherited::Hit	(pHDS);
 	}
@@ -321,11 +329,11 @@ void CPhantom::PsyHit(const CObject *object, float value)
 // Core events
 void CPhantom::save(NET_Packet &output_packet)
 {
-	output_packet.w_s32	(s32(m_CurState));
+	//output_packet.w_s32	(s32(m_CurState));
 }
 void CPhantom::load(IReader &input_packet)
 {
-	SwitchToState	(EState(input_packet.r_s32()));
+	//SwitchToState	(EState(input_packet.r_s32()));
 }
 void CPhantom::net_Export	(NET_Packet& P)					// export to server
 {
