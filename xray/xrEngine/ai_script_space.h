@@ -14,7 +14,8 @@
 
 //#define LUABIND_NO_EXCEPTIONS
 
-#include <luabind/functor.hpp>
+//AVO: lua re-org
+#include "lua.hpp"
 /*extern "C" {
 	//#define BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION
 
