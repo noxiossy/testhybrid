@@ -99,8 +99,9 @@ void CUICursor::UpdateCursorPosition(int _dx, int _dy)
 	vPrevPos	= vPos;
 	if(m_b_use_win_cursor)
 	{
-        Ivector2 pti;
-        IInputReceiver::IR_GetMousePosReal(pti);
+		POINT		pti;
+		BOOL r		= GetCursorPos(&pti);
+		if(!r)		return;
 		p.x			= (float)pti.x;
 		p.y			= (float)pti.y;
 		vPos.x		= p.x * (UI_BASE_WIDTH/(float)Device.dwWidth);
@@ -121,7 +122,6 @@ void CUICursor::SetUICursorPosition(Fvector2 pos)
 	POINT		p;
 	p.x			= iFloor(vPos.x / (UI_BASE_WIDTH/(float)Device.dwWidth));
 	p.y			= iFloor(vPos.y / (UI_BASE_HEIGHT/(float)Device.dwHeight));
-    if (m_b_use_win_cursor)
-        ClientToScreen(Device.m_hWnd, (LPPOINT)&p);
+
 	SetCursorPos(p.x, p.y);
 }

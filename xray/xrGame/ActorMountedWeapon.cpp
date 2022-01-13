@@ -13,6 +13,7 @@
 #include "pch_script.h"
 #include "../xrServerEntities/script_engine.h" 
 using namespace luabind; 
+#include <luabind/functor.hpp>
 
 bool CActor::use_HolderEx(CHolderCustom* object, bool bForce)
 {

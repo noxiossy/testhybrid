@@ -11,6 +11,7 @@
 #include "alife_simulator.h"
 #include "xrServer_Objects_ALife_Items.h"
 #include "../xrServerEntities/script_engine.h" 
+#include <luabind/functor.hpp>
 
 void CSE_ALifeObject::spawn_supplies		()
 {

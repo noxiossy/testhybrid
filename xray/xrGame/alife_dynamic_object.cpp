@@ -16,6 +16,7 @@
 #include "game_level_cross_table.h"
 #include "game_graph.h"
 #include "xrServer.h"
+#include <luabind/functor.hpp>
 
 void CSE_ALifeDynamicObject::on_spawn				()
 {

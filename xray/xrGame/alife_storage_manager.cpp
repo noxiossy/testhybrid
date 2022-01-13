@@ -25,6 +25,7 @@
 //Alundaio
 #include "ai_space.h"
 #include "script_engine.h"
+#include <luabind/functor.hpp>
 //-Alundaio
 
 XRCORE_API string_path g_bug_report_file;

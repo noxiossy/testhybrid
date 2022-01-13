@@ -24,6 +24,7 @@
 #include "UIListBoxItem.h"
 
 #include "../../xrEngine/xr_input.h"		//remove me !!!
+#include <luabind/functor.hpp>
 
 CUIMapWnd* g_map_wnd = NULL; // quick temporary solution -(
 CUIMapWnd* GetMapWnd()

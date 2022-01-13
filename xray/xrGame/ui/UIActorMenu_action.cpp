@@ -30,6 +30,7 @@
 #include "UIMainIngameWnd.h"
 
 using namespace luabind; //Alundaio
+#include <luabind/functor.hpp>
 
 bool  CUIActorMenu::AllowItemDrops(EDDListType from, EDDListType to)
 {

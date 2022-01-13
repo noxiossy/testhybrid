@@ -30,6 +30,7 @@
 #include "pch_script.h"
 #include "script_callback_ex.h.h"
 #include "../xrServerEntities/script_engine.h" 
+#include <luabind/functor.hpp>
 using namespace luabind; 
 //-Alundaio
 

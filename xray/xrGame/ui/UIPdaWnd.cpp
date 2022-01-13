@@ -28,6 +28,7 @@
 #include "UILogsWnd.h"
 
 #include "UIScriptWnd.h"
+#include <luabind/functor.hpp>
 
 #define PDA_XML		"pda.xml"
 
