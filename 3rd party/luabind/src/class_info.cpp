@@ -53,7 +53,7 @@ namespace luabind
 		for (map_type::const_iterator i = crep->properties().begin();
 			i != crep->properties().end(); ++i)
 		{
-			result.attributes[index] = i->first;
+			result.attributes[index++] = i->first;
 		}
 
 		return result;
