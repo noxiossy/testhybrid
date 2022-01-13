@@ -232,7 +232,7 @@ void CUIActorMenu::Update()
 		}
 	case mmDeadBodySearch:
 		{
-			CheckDistance();
+			//CheckDistance();
 			break;
 		}
 	default: R_ASSERT(0); break;
@@ -411,11 +411,7 @@ void CUIActorMenu::InfoCurItem( CUICellItem* cell_item )
 			}
 		}
 
-		if(	!current_item->CanTrade() || 
-			(!m_pPartnerInvOwner->trade_parameters().enabled(CTradeParameters::action_buy(0), 
-															current_item->object().cNameSect()) &&
-			item_owner && item_owner==m_pActorInvOwner)
-		)
+		if (!current_item->CanTrade() ||	(!m_pPartnerInvOwner->trade_parameters().enabled(CTradeParameters::action_buy(0), current_item->object().cNameSect()) && item_owner && item_owner==m_pActorInvOwner))
 			m_ItemInfo->InitItem	( cell_item, compare_item, u32(-1), "st_no_trade_tip_1" );
 		else if(current_item->GetCondition()<m_pPartnerInvOwner->trade_parameters().buy_item_condition_factor)
 			m_ItemInfo->InitItem	( cell_item, compare_item, u32(-1), "st_no_trade_tip_2" );
@@ -512,23 +508,25 @@ void CUIActorMenu::highlight_item_slot(CUICellItem* cell_item)
 	CEatableItem* eatable = smart_cast<CEatableItem*>(item);
 	CArtefact* artefact = smart_cast<CArtefact*>(item);
 
-	if(weapon)
+	u16 slot_id = item->BaseSlot();
+
+	if (weapon && (slot_id == INV_SLOT_2 || slot_id == INV_SLOT_3))
 	{
 		m_InvSlot2Highlight->Show(true);
 		m_InvSlot3Highlight->Show(true);
 		return;
 	}
-	if(helmet)
+	if(helmet && slot_id == HELMET_SLOT)
 	{
 		m_HelmetSlotHighlight->Show(true);
 		return;
 	}
-	if(outfit)
+	if(outfit && slot_id == OUTFIT_SLOT)
 	{
 		m_OutfitSlotHighlight->Show(true);
 		return;
 	}
-	if(detector)
+	if(detector && slot_id == DETECTOR_SLOT)
 	{
 		m_DetectorSlotHighlight->Show(true);
 		return;
@@ -882,26 +880,43 @@ void CUIActorMenu::UpdateConditionProgressBars()
 	PIItem itm = m_pActorInvOwner->inventory().ItemFromSlot(INV_SLOT_2);
 	if(itm)
 	{
-		m_WeaponSlot1_progress->SetProgressPos(iCeil(itm->GetCondition()*15.0f)/15.0f);
+		m_WeaponSlot1_progress->SetProgressPos(iCeil(itm->GetCondition()*10.0f)/10.0f);
 	}
 	else
 		m_WeaponSlot1_progress->SetProgressPos(0);
 
 	itm = m_pActorInvOwner->inventory().ItemFromSlot(INV_SLOT_3);
 	if(itm)
-		m_WeaponSlot2_progress->SetProgressPos(iCeil(itm->GetCondition()*15.0f)/15.0f);
+		m_WeaponSlot2_progress->SetProgressPos(iCeil(itm->GetCondition()*10.0f)/10.0f);
 	else
 		m_WeaponSlot2_progress->SetProgressPos(0);
 
 	itm = m_pActorInvOwner->inventory().ItemFromSlot(OUTFIT_SLOT);
 	if(itm)
-		m_Outfit_progress->SetProgressPos(iCeil(itm->GetCondition()*15.0f)/15.0f);
+		m_Outfit_progress->SetProgressPos(iCeil(itm->GetCondition()*10.0f)/10.0f);
 	else
 		m_Outfit_progress->SetProgressPos(0);
 
 	itm = m_pActorInvOwner->inventory().ItemFromSlot(HELMET_SLOT);
 	if(itm)
-		m_Helmet_progress->SetProgressPos(iCeil(itm->GetCondition()*15.0f)/15.0f);
+		m_Helmet_progress->SetProgressPos(iCeil(itm->GetCondition()*10.0f)/10.0f);
 	else
 		m_Helmet_progress->SetProgressPos(0);
+
+	//Highlight 'equipped' items in actor bag
+	CUIDragDropListEx* slot_list = m_pInventoryBagList;
+	u32 const cnt = slot_list->ItemsCount();
+	for (u32 i = 0; i < cnt; ++i)
+	{
+		CUICellItem* ci = slot_list->GetItemIdx(i);
+		PIItem item = (PIItem)ci->m_pData;
+		if (!item)
+			continue;
+		
+		if (item->m_highlight_equipped && item->m_pInventory && item->m_pInventory->ItemFromSlot(item->BaseSlot()) == item)
+			ci->m_select_equipped = true;
+		else
+			ci->m_select_equipped = false;
+	}
+
 }

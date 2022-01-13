@@ -20,6 +20,8 @@ class CUILogsWnd;
 class CUIAnimatedStatic;
 class UIHint;
 
+class CMapSpot;
+
 
 class CUIPdaWnd: public CUIDialogWnd
 {
@@ -47,6 +49,8 @@ public:
 //-	CUIFactionWarWnd*		pUIFactionWarWnd;
 	CUIRankingWnd*			pUIRankingWnd;
 	CUILogsWnd*				pUILogsWnd;
+	
+	CMapSpot*				pSelectedMapSpot;
 
 	virtual void			Reset				();
 
@@ -72,10 +76,19 @@ public:
 			void			Show_SecondTaskWnd	(bool status);
 			void			Show_MapLegendWnd	(bool status);
 
-			void			SetActiveSubdialog	(const shared_str& section);
+			void 			SetActiveDialog		(CUIWindow* pUI) 	{ m_pActiveDialog = pUI; };
+			CUIWindow*		GetActiveDialog		() 					{return m_pActiveDialog;};
+			LPCSTR			GetActiveSection	()					{return m_sActiveSection.c_str();};
+			CUITabControl*	GetTabControl() { return UITabControl; };
+			
+			void			SetActiveSubdialog			(const shared_str& section);
+			void			SetActiveSubdialog_script(LPCSTR section)				{ SetActiveSubdialog((const shared_str&)section); };
 	virtual bool			StopAnyMove			(){return false;}
 
 			void			UpdatePda			();
 			void			UpdateRankingWnd	();
-
+			DECLARE_SCRIPT_REGISTER_FUNCTION
 };
+add_to_type_list(CUIPdaWnd)
+#undef script_type_list
+#define script_type_list save_type_list(CUIPdaWnd)

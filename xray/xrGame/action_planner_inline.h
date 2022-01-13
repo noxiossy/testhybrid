@@ -81,36 +81,53 @@ void CPlanner::update				()
 		}
 	}
 #endif
+	//Alundaio: debug action
+	bool bDbgAct = strstr(Core.Params, "-dbgact") != NULL;
 
 #ifdef LOG_ACTION
 	if (m_failed) {
 		// printing current world state
 		show						();
-
-		Msg							("! ERROR : there is no action sequence, which can transfer current world state to the target one");
-		Msg							("Time : %6d",Device.dwTimeGlobal);
-		Msg							("Object : %s",object_name());
-
+		Msg("!ERROR: there is no action sequence, which can transfer current world state to the target one action[%s] object[%s]", current_action().m_action_name);
 		show_current_world_state	();
 		show_target_world_state		();
 //		VERIFY2						(!m_failed,"Problem solver couldn't build a valid path - verify your conditions, effects and goals!");
 	}
+#else
+	if (bDbgAct && m_failed && current_action().m_action_name)
+		Msg("!ERROR: there is no action sequence, which can transfer current world state to the target one. action[%s]", current_action().m_action_name);
 #endif
 
 	THROW							(!solution().empty());
+	//Alundaio:
+	if (solution().empty())
+		return;
+	//-Alundaio
 
 	if (initialized()) {
 		if (current_action_id() != solution().front()) {
 			current_action().finalize	();
 			m_current_action_id			= solution().front();
+			//Alundaio: More detailed logging for initializing action
+			if (bDbgAct == true)
+				Msg("DEBUG: Action [%s] initializing", current_action().m_action_name);
 			current_action().initialize	();
 		}
 	}
 	else {
 		m_initialized				= true;
 		m_current_action_id			= solution().front();
+		//Alundaio: More detailed logging for initializing action
+		if (bDbgAct == true)
+			Msg("DEBUG: Action [%s] initializing", current_action().m_action_name);
 		current_action().initialize	();
 	}
+		
+	//Alundaio: More detailed logging for executing action; Knowing the last executing action before a crash can be very useful for debugging
+	if (bDbgAct == true)
+		Msg("DEBUG: Action [%s] executing", current_action().m_action_name);
+
+	//-Alundaio: Debug Action
 
 	current_action().execute	();
 }
@@ -137,7 +154,7 @@ IC	typename CPlanner::CConditionEvaluator &CPlanner::evaluator		(const _conditio
 TEMPLATE_SPECIALIZATION
 IC	typename CPlanner::_action_id_type CPlanner::current_action_id	() const
 {
-	VERIFY					(initialized());
+	VERIFY2					(initialized(),make_string("ERROR: action by id [%d] not initialized!",m_current_action_id)); //Alundaio: More detailed information needed
 	return					(m_current_action_id);
 }
 

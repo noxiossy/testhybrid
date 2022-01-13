@@ -5,6 +5,9 @@
 //	Author		: Victor Reutsky, Yuri Dobronravin
 //	Description : Inventory item
 ////////////////////////////////////////////////////////////////////////////
+//	Modified by Axel DominatoR
+//	Last updated: 13/08/2015
+////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
@@ -96,6 +99,8 @@ public:
 	virtual void				OnEvent				(NET_Packet& P, u16 type);
 	
 	virtual bool				Useful				() const;									// !!! Переопределить. (см. в Inventory.cpp)
+	virtual bool				IsUsingCondition() const { return ( m_flags.test( FUsingCondition ) > 0 ); };
+
 	virtual bool				Attach				(PIItem pIItem, bool b_send_event) {return false;}
 	virtual bool				Detach				(PIItem pIItem) {return false;}
 	//при детаче спаунится новая вещь при заданно названии секции
@@ -135,6 +140,7 @@ public:
 	virtual	u32					Cost				()	const	{ return m_cost; }
 //			u32					Cost				()	const	{ return m_cost; }
 	virtual float				Weight				() 	const	{ return m_weight;}		
+	void						SetWeight(float w) { m_weight = w; };
 
 public:
 	CInventory*					m_pInventory;
@@ -142,6 +148,7 @@ public:
 	shared_str					m_name;
 	shared_str					m_nameShort;
 	shared_str					m_nameComplex;
+	bool						m_highlight_equipped;
 
 	SInvItemPlace				m_ItemCurrPlace;
 
@@ -278,6 +285,9 @@ public:
 	bool	has_upgrade_group			( const shared_str& upgrade_group_id );
 	void	add_upgrade					( const shared_str& upgrade_id, bool loading );
 	bool	get_upgrades_str			( string2048& res ) const;
+#ifdef GAME_OBJECT_EXTENDED_EXPORTS
+	Upgrades_type get_upgrades() { return m_upgrades; }	//Alundaio
+#endif
 
 	bool	equal_upgrades				( Upgrades_type const& other_upgrades ) const;
 

@@ -9,7 +9,9 @@
 #include "UIMMShniaga.h"
 #include "UITextureMaster.h"
 #include "UIScrollView.h"
-
+#include "UIHint.h"
+#include "../ScriptXMLInit.h"
+#include "../UICursor.h"
 CFontManager& mngr(){
 	return UI().Font();
 }
@@ -46,6 +48,17 @@ const Fvector2* get_wnd_pos(CUIWindow* w)
 {
 	return &w->GetWndPos();
 }
+
+Fvector2 GetCursorPosition_script()
+{
+	return GetUICursor().GetCursorPosition();
+}
+
+void SetCursorPosition_script(Fvector2& pos)
+{
+	GetUICursor().SetUICursorPosition(pos);
+}
+
 using namespace luabind;
 #pragma optimize("s",on)
 void CUIWindow::script_register(lua_State *L)
@@ -63,6 +76,9 @@ void CUIWindow::script_register(lua_State *L)
 		def("GetFontGraffiti32Russian",	&GetFontGraffiti32Russian),
 		def("GetFontGraffiti50Russian",	&GetFontGraffiti50Russian),
 		def("GetFontLetterica25",		&GetFontLetterica25),
+		def("GetCursorPosition",		&GetCursorPosition_script),
+		def("SetCursorPosition",		&SetCursorPosition_script),
+		def("FitInRect", &fit_in_rect),
 
 		class_<CUIWindow>("CUIWindow")
 		.def(							constructor<>())
@@ -70,6 +86,10 @@ void CUIWindow::script_register(lua_State *L)
 		.def("DetachChild",				&CUIWindow::DetachChild)
 		.def("SetAutoDelete",			&CUIWindow::SetAutoDelete)
 		.def("IsAutoDelete",			&CUIWindow::IsAutoDelete)
+		
+		.def("IsCursorOverWindow", &CUIWindow::CursorOverWindow)
+		.def("FocusReceiveTime", &CUIWindow::FocusReceiveTime)
+		.def("GetAbsoluteRect", &CUIWindow::GetAbsoluteRect)
 
 		.def("SetWndRect",				(void (CUIWindow::*)(Frect))	&CUIWindow::SetWndRect_script)
 		.def("SetWndPos",				(void (CUIWindow::*)(Fvector2)) &CUIWindow::SetWndPos_script)
@@ -109,6 +129,13 @@ void CUIWindow::script_register(lua_State *L)
 		.def("SetHeight",				&CUIFrameLineWnd::SetHeight)
 		.def("SetColor",				&CUIFrameLineWnd::SetTextureColor),
 
+		class_<UIHint, CUIWindow>("UIHint")
+		.def(							constructor<>())
+		.def("SetWidth",				&UIHint::SetWidth)
+		.def("SetHeight",				&UIHint::SetHeight)
+		.def("SetHintText",				&UIHint::set_text)
+		.def("GetHintText",				&UIHint::get_text),
+		
 		class_<CUIMMShniaga, CUIWindow>("CUIMMShniaga")
 		.enum_("enum_page_id")
 		[
@@ -133,6 +160,7 @@ void CUIWindow::script_register(lua_State *L)
 		.def("GetMinScrollPos",			&CUIScrollView::GetMinScrollPos)
 		.def("GetMaxScrollPos",			&CUIScrollView::GetMaxScrollPos)
 		.def("GetCurrentScrollPos",		&CUIScrollView::GetCurrentScrollPos)
+		.def("SetFixedScrollBar", 		&CUIScrollView::SetFixedScrollBar)
 		.def("SetScrollPos",			&CUIScrollView::SetScrollPos),
 
 		class_<enum_exporter<EUIMessages> >("ui_events")
@@ -149,6 +177,8 @@ void CUIWindow::script_register(lua_State *L)
 				value("WINDOW_KEY_RELEASED",			int(WINDOW_KEY_RELEASED)),
 				value("WINDOW_KEYBOARD_CAPTURE_LOST",	int(WINDOW_KEYBOARD_CAPTURE_LOST)),
 
+				// CUITradeWnd
+				//value("TRADE_WND_CLOSED", int(TRADE_WND_CLOSED)),
 
 	// CUIButton
 				value("BUTTON_CLICKED",					int(BUTTON_CLICKED)),

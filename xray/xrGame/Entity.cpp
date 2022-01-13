@@ -244,8 +244,20 @@ void CEntity::net_Destroy	()
 	set_ready_to_save		();
 }
 
-void CEntity::KillEntity(u16 whoID)
+void CEntity::KillEntity(u16 whoID, BOOL bypass_actor_check /*AVO: added for actor_before_death callback*/)
 {
+    //AVO: allow scripts to process actor condition and prevent actor's death or kill him if desired.
+    //IMPORTANT: if you wish to kill actor you need to call db.actor:kill(level:object_by_id(whoID), true) in actor_before_death callback, to ensure all objects are properly destroyed
+    // this will bypass below if block and go to normal KillEntity routine.
+#ifdef ACTOR_BEFORE_DEATH_CALLBACK
+    if (IsGameTypeSingle() && (this->ID() == Actor()->ID()) && (bypass_actor_check != TRUE))
+    {
+		Actor()->use_HolderEx(NULL,true);
+        Actor()->callback(GameObject::eActorBeforeDeath)(whoID);
+        return;
+    }
+#endif
+    //-AVO
 	if (whoID != ID()) {
 #ifdef DEBUG
 		if (m_killer_id != ALife::_OBJECT_ID(-1)) {

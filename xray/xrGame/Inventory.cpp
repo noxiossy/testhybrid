@@ -1,3 +1,8 @@
+////////////////////////////////////////////////////////////////////////////
+//	Modified by Axel DominatoR
+//	Last updated: 13/08/2015
+////////////////////////////////////////////////////////////////////////////
+
 #include "pch_script.h"
 #include "inventory.h"
 #include "actor.h"
@@ -22,11 +27,15 @@
 #include "player_hud.h"
 
 using namespace InventoryUtilities;
+//Alundaio
+#include "../../xrServerEntities/script_engine.h" 
+using namespace luabind; 
+//-Alundaio
 
 // what to block
-u16	INV_STATE_LADDER		= (1<<INV_SLOT_3 | 1<<BINOCULAR_SLOT);
+u16	INV_STATE_BLOCK_ALL = 0xffff;
+u16	INV_STATE_LADDER = INV_STATE_BLOCK_ALL;
 u16	INV_STATE_CAR			= INV_STATE_LADDER;
-u16	INV_STATE_BLOCK_ALL		= 0xffff;
 u16	INV_STATE_INV_WND		= INV_STATE_BLOCK_ALL;
 u16	INV_STATE_BUY_MENU		= INV_STATE_BLOCK_ALL;
 
@@ -49,23 +58,38 @@ bool CInventorySlot::CanBeActivated() const
 CInventory::CInventory() 
 {
 	m_fMaxWeight								= pSettings->r_float	("inventory","max_weight");
-	
-	u32 sz										= pSettings->r_s32		("inventory","slots_count");
-	m_slots.resize								(sz+1); //first is [1]
-	
 	m_iActiveSlot								= NO_ACTIVE_SLOT;
 	m_iNextActiveSlot							= NO_ACTIVE_SLOT;
 	m_iPrevActiveSlot							= NO_ACTIVE_SLOT;
 
-	string256 temp;
-	for(u16 i=FirstSlot(); i<=LastSlot(); ++i ) 
-	{
-		xr_sprintf(temp, "slot_persistent_%d", i);
-		m_slots[i].m_bPersistent = !!pSettings->r_bool("inventory",temp);
+	//Alundaio: Dynamically create as many slots as we may define in system.ltx
+	string256	slot_persistent;
+	string256	slot_active;
+	xr_strcpy(slot_persistent,"slot_persistent_1");
+	xr_strcpy(slot_active,"slot_active_1");
+	
+	u16 k=1;
+	while( pSettings->line_exist("inventory", slot_persistent) && pSettings->line_exist("inventory", slot_active)){
+		m_last_slot = k;
+		
+		m_slots.resize(k+1); //slot+1 because [0] is the inactive slot
+		
+		m_slots[k].m_bPersistent = !!pSettings->r_bool("inventory",slot_persistent);
+		m_slots[k].m_bAct = !!pSettings->r_bool("inventory",slot_active);
+		
+		k++;
 
-		xr_sprintf			(temp, "slot_active_%d", i);
-		m_slots[i].m_bAct	= !!pSettings->r_bool("inventory",temp);
-	};
+		xr_sprintf		(slot_persistent,"%s%d","slot_persistent_",k);
+		xr_sprintf		(slot_active,"%s%d","slot_active_",k);
+	}
+	
+	m_blocked_slots.resize(k+1);
+	
+	for (u16 i = 0; i <= k; ++i)
+	{
+		m_blocked_slots[i] = 0;
+	}
+	//-Alundaio
 
 	m_bSlotsUseful								= true;
 	m_bBeltUseful								= false;
@@ -76,11 +100,6 @@ CInventory::CInventory()
 	
 	InitPriorityGroupsForQSwitch				();
 	m_next_item_iteration_time					= 0;
-
-	for (u16 i = 0; i < LAST_SLOT+1; ++i)
-	{
-		m_blocked_slots[i] = 0;
-	}
 }
 
 
@@ -382,9 +401,9 @@ bool CInventory::Slot(u16 slot_id, PIItem pIItem, bool bNotActivate, bool strict
 		Activate				(slot_id);
 	}
 	SInvItemPlace p					= pIItem->m_ItemCurrPlace;
+	m_pOwner->OnItemSlot			(pIItem, pIItem->m_ItemCurrPlace);
 	pIItem->m_ItemCurrPlace.type	= eItemPlaceSlot;
 	pIItem->m_ItemCurrPlace.slot_id = slot_id;
-	m_pOwner->OnItemSlot			(pIItem, p);
 	pIItem->OnMoveToSlot			(p);
 	
 	pIItem->object().processing_activate();
@@ -1057,14 +1076,32 @@ bool CInventory::Eat(PIItem pIItem)
 	Msg( "--- Actor [%d] use or eat [%d][%s]", entity_alive->ID(), pItemToEat->object().ID(), pItemToEat->object().cNameSect().c_str() );
 #endif // MP_LOGGING
 
-	if(IsGameTypeSingle() && Actor()->m_inventory == this)
-		Actor()->callback(GameObject::eUseObject)((smart_cast<CGameObject*>(pIItem))->lua_game_object());
-
-	if(pItemToEat->Empty())
+	luabind::functor<bool>	funct;
+	if (ai().script_engine().functor("_G.CInventory__eat", funct))
 	{
-		pIItem->SetDropManual(TRUE);
-		return		false;
+		if (!funct(smart_cast<CGameObject*>(pItemToEat->object().H_Parent())->lua_game_object(), (smart_cast<CGameObject*>(pIItem))->lua_game_object()))
+			return false;
 	}
+	
+	if (Actor()->m_inventory == this)
+	{
+		if (IsGameTypeSingle())
+			Actor()->callback(GameObject::eUseObject)((smart_cast<CGameObject*>(pIItem))->lua_game_object());
+
+		if (pItemToEat->IsUsingCondition() && pItemToEat->GetRemainingUses() < 1 && pItemToEat->CanDelete())
+			CurrentGameUI()->m_ActorMenu().RefreshCurrentItemCell();
+		
+		CurrentGameUI()->m_ActorMenu().SetCurrentItem(NULL);
+	}
+
+	if (pItemToEat->Empty())
+	{
+		if (!pItemToEat->CanDelete())
+			return false;
+
+		pIItem->SetDropManual(TRUE);
+	}
+
 	return			true;
 }
 
@@ -1198,8 +1235,7 @@ bool CInventory::CanTakeItem(CInventoryItem *inventory_item) const
 
 	if(!inventory_item->CanTake()) return false;
 
-	TIItemContainer::const_iterator it = m_all.begin();
-	for(; it != m_all.end(); it++)
+	for(TIItemContainer::const_iterator it = m_all.begin(); it != m_all.end(); it++)
 		if((*it)->object().ID() == inventory_item->object().ID()) break;
 	VERIFY3(it == m_all.end(), "item already exists in inventory",*inventory_item->object().cName());
 
@@ -1226,13 +1262,24 @@ u32  CInventory::BeltWidth() const
 	return 0; //m_iMaxBelt;
 }
 
-void  CInventory::AddAvailableItems(TIItemContainer& items_container, bool for_trade) const
+void  CInventory::AddAvailableItems(TIItemContainer& items_container, bool for_trade, bool bOverride) const
 {
 	for(TIItemContainer::const_iterator it = m_ruck.begin(); m_ruck.end() != it; ++it) 
 	{
 		PIItem pIItem = *it;
 		if(!for_trade || pIItem->CanTrade())
+		{
+			if (bOverride)
+			{
+				luabind::functor<bool> funct;
+				if (ai().script_engine().functor("actor_menu_inventory.CInventory_ItemAvailableToTrade", funct))
+				{
+					if (!funct(m_pOwner->cast_game_object()->lua_game_object(),pIItem->cast_game_object()->lua_game_object()))
+						continue;
+				}
+			}
 			items_container.push_back(pIItem);
+		}
 	}
 
 	if(m_bBeltUseful)
@@ -1241,7 +1288,18 @@ void  CInventory::AddAvailableItems(TIItemContainer& items_container, bool for_t
 		{
 			PIItem pIItem = *it;
 			if(!for_trade || pIItem->CanTrade())
+			{
+				if (bOverride)
+				{
+					luabind::functor<bool> funct;
+					if (ai().script_engine().functor("actor_menu_inventory.CInventory_ItemAvailableToTrade", funct))
+					{
+						if (!funct(m_pOwner->cast_game_object()->lua_game_object(), pIItem->cast_game_object()->lua_game_object()))
+							continue;
+					}
+				}
 				items_container.push_back(pIItem);
+			}
 		}
 	}
 	
@@ -1255,7 +1313,18 @@ void  CInventory::AddAvailableItems(TIItemContainer& items_container, bool for_t
 			if(item && (!for_trade || item->CanTrade())  )
 			{
 				if(!SlotIsPersistent(I) || item->BaseSlot()==GRENADE_SLOT )
+				{
+					if (bOverride)
+					{
+						luabind::functor<bool> funct;
+						if (ai().script_engine().functor("actor_menu_inventory.CInventory_ItemAvailableToTrade", funct))
+						{
+							if (!funct(m_pOwner->cast_game_object()->lua_game_object(), item->cast_game_object()->lua_game_object()))
+								continue;
+						}
+					}
 					items_container.push_back(item);
+				}
 			}
 		}
 	}		
@@ -1377,7 +1446,7 @@ void CInventory::TryDeactivateActiveSlot	()
 
 void CInventory::BlockSlot(u16 slot_id)
 {
-	VERIFY(slot_id <= LAST_SLOT);
+	//VERIFY(slot_id <= LAST_SLOT);
 	
 	++m_blocked_slots[slot_id];
 	
@@ -1387,7 +1456,7 @@ void CInventory::BlockSlot(u16 slot_id)
 
 void CInventory::UnblockSlot(u16 slot_id)
 {
-	VERIFY(slot_id <= LAST_SLOT);
+	//VERIFY(slot_id <= LAST_SLOT);
 	VERIFY2(m_blocked_slots[slot_id] > 0,
 		make_string("blocked slot [%d] underflow").c_str());	
 	
@@ -1396,7 +1465,7 @@ void CInventory::UnblockSlot(u16 slot_id)
 
 bool CInventory::IsSlotBlocked(u16 slot_id) const
 {
-	VERIFY(slot_id <= LAST_SLOT);
+	//VERIFY(slot_id <= LAST_SLOT);
 	return m_blocked_slots[slot_id] > 0;
 }
 

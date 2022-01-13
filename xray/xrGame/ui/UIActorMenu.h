@@ -1,9 +1,13 @@
 #pragma once
 
+#include "script_export_space.h"
+
 #include "UIDialogWnd.h"
 #include "UIWndCallback.h"
 #include "../../xrServerEntities/inventory_space.h"
 #include "UIHint.h"
+
+#include "script_game_object.h" //Alundaio
 
 class CUICharacterInfo;
 class CUIDragDropListEx;
@@ -191,6 +195,7 @@ private:
 	void						PropertiesBoxForPlaying		(PIItem item, bool& b_show);
 	void						PropertiesBoxForDrop		(CUICellItem* cell_item, PIItem item, bool& b_show);
 	void						PropertiesBoxForRepair		(PIItem item, bool& b_show);
+	void						PropertiesBoxForDonate		(PIItem item, bool& b_show); //Alundaio
 
 private:
 	void						clear_highlight_lists		();
@@ -243,8 +248,8 @@ protected:
 	void						CurModeToScript				();
 	void						RepairEffect_CurItem		();
 
-	void						SetCurrentItem				(CUICellItem* itm);
-	CUICellItem*				CurrentItem					();
+	//void						SetCurrentItem				(CUICellItem* itm); //Alundaio: Made public
+	//CUICellItem*				CurrentItem					();					//Alundaio: Made public
 	PIItem						CurrentIItem				();
 
 	void						InfoCurItem					(CUICellItem* cell_item); //on update item
@@ -262,8 +267,10 @@ protected:
 	void						UpdateButtonsLayout			();
 
 	// inventory
+	bool						ToSlotScript				(CScriptGameObject* GO, bool force_place, u16 slot_id);
 	bool						ToSlot						(CUICellItem* itm, bool force_place, u16 slot_id);
 	bool						ToBag						(CUICellItem* itm, bool b_use_cursor_pos);
+	bool						ToBeltScript				(CScriptGameObject* GO, bool b_use_cursor_pos);
 	bool						ToBelt						(CUICellItem* itm, bool b_use_cursor_pos);
 	bool						TryUseItem					(CUICellItem* cell_itm);
 	bool						ToQuickSlot					(CUICellItem* itm);
@@ -339,4 +346,19 @@ public:
 
 	IC	UIHint*					get_hint_wnd				() { return m_hint_wnd; }
 
+	//AxelDominator && Alundaio consumable use condition
+	void RefreshCurrentItemCell();
+	void SetCurrentItem(CUICellItem* itm);		//Alundaio: Made public
+	CUICellItem* CurrentItem();					//Alundaio: Made public
+
+	CScriptGameObject* GetCurrentItemAsGameObject();
+	void HighlightSectionInSlot(LPCSTR section, u8 type, u16 slot_id = 0);
+	void HighlightForEachInSlot(luabind::functor<bool> functor, u8 type, u16 slot_id);
+
+	//-AxelDominator && Alundaio consumable use condition
+	void DonateCurrentItem(CUICellItem* cell_item); //Alundaio: Donate item via context menu while in trade menu
+	DECLARE_SCRIPT_REGISTER_FUNCTION
 }; // class CUIActorMenu
+add_to_type_list(CUIActorMenu)
+#undef script_type_list
+#define script_type_list save_type_list(CUIActorMenu)

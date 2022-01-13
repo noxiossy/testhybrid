@@ -365,8 +365,10 @@ LPCSTR InventoryUtilities::GetTimePeriodAsString(LPSTR _buff, u32 buff_sz, ALife
 	int cnt		= 0;
 	_buff[0]	= 0;
 
-	if(month1!=month2)
-		cnt = xr_sprintf(_buff+cnt,buff_sz-cnt,"%d %s ",month2-month1, *CStringTable().translate("ui_st_months"));
+	u8 yrdiff = ((year2 - year1) * 12);
+
+	if (month1 != month2 || yrdiff > 0)
+		cnt = xr_sprintf(_buff + cnt, buff_sz - cnt, "%d %s", month2 + (yrdiff - month1), *CStringTable().translate("ui_st_months"));
 
 	if(!cnt && day1!=day2)
 		cnt = xr_sprintf(_buff+cnt,buff_sz-cnt,"%d %s",day2-day1, *CStringTable().translate("ui_st_days"));
@@ -548,7 +550,7 @@ u32 InventoryUtilities::GetGoodwillColor(CHARACTER_GOODWILL gw)
 {
 	u32 res = 0xffc0c0c0;
 	if(gw==NEUTRAL_GOODWILL){
-		res = 0xffc0c0c0;
+		res = 0xfffce80b; //0xffc0c0c0;
 	}else
 	if(gw>1000){
 		res = 0xff00ff00;
@@ -581,7 +583,7 @@ u32	InventoryUtilities::GetRelationColor(ALife::ERelationType relation)
 		return 0xff00ff00;
 		break;
 	case ALife::eRelationTypeNeutral:
-		return 0xffc0c0c0;
+		return 0xfffce80b; //0xffc0c0c0;
 		break;
 	case ALife::eRelationTypeEnemy:
 		return  0xffff0000;

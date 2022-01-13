@@ -98,8 +98,10 @@ extern int		g_upgrades_log;
 extern float	g_smart_cover_animation_speed_factor;
 
 extern	BOOL	g_ai_use_old_vision;
-float			g_aim_predict_time = 0.44f;
+float			g_aim_predict_time = 0.40f;
 int				g_keypress_on_start	= 1;
+
+extern BOOL		g_ai_die_in_anomaly; //Alundaio
 
 ENGINE_API extern float	g_console_sensitive;
 
@@ -182,7 +184,7 @@ static void full_memory_stats	( )
 
 	Msg		("* [x-ray]: economy: strings[%d K], smem[%d K]",_eco_strings/1024,_eco_smem);
 
-#ifdef DEBUG
+#ifdef FS_DEBUG
 	Msg		("* [x-ray]: file mapping: memory[%d K], count[%d]",g_file_mapped_memory/1024,g_file_mapped_count);
 	dump_file_mappings	();
 #endif // DEBUG
@@ -1085,7 +1087,7 @@ public:
 	  }
 };
 
-#ifdef DEBUG
+//#ifdef DEBUG
 class CCC_PHGravity : public IConsole_Command {
 public:
 		CCC_PHGravity(LPCSTR N) :
@@ -1114,7 +1116,7 @@ public:
 	}
 	
 };
-#endif // DEBUG
+//#endif // DEBUG
 
 class CCC_PHFps : public IConsole_Command {
 public:
@@ -1187,7 +1189,7 @@ public:
 */
 #endif
 
-#ifndef MASTER_GOLD
+//#ifndef MASTER_GOLD
 #	include "game_graph.h"
 struct CCC_JumpToLevel : public IConsole_Command {
 	CCC_JumpToLevel(LPCSTR N) : IConsole_Command(N)  {};
@@ -1342,7 +1344,7 @@ public:
 	}
 };
 
-#endif // MASTER_GOLD
+//#endif // MASTER_GOLD
 
 #include "GamePersistent.h"
 
@@ -1817,11 +1819,11 @@ void CCC_RegisterCommands()
 #ifndef MASTER_GOLD
 	CMD1(CCC_ALifeTimeFactor,		"al_time_factor"		);		// set time factor
 	CMD1(CCC_ALifeSwitchDistance,	"al_switch_distance"	);		// set switch distance
-	CMD1(CCC_ALifeProcessTime,		"al_process_time"		);		// set process time
-	CMD1(CCC_ALifeObjectsPerUpdate,	"al_objects_per_update"	);		// set process time
 	CMD1(CCC_ALifeSwitchFactor,		"al_switch_factor"		);		// set switch factor
 #endif // #ifndef MASTER_GOLD
 
+	CMD1(CCC_ALifeProcessTime,		"al_process_time"		);		// set process time
+	CMD1(CCC_ALifeObjectsPerUpdate,	"al_objects_per_update"	);		// set process time
 
 	CMD3(CCC_Mask,				"hud_weapon",			&psHUD_Flags,	HUD_WEAPON);
 	CMD3(CCC_Mask,				"hud_info",				&psHUD_Flags,	HUD_INFO);
@@ -1836,17 +1838,17 @@ void CCC_RegisterCommands()
 	CMD3(CCC_Mask,				"hud_crosshair",		&psHUD_Flags,	HUD_CROSSHAIR);
 	CMD3(CCC_Mask,				"hud_crosshair_dist",	&psHUD_Flags,	HUD_CROSSHAIR_DIST);
 
-#ifdef DEBUG
+	//#ifdef DEBUG
 	CMD4(CCC_Float,				"hud_fov",				&psHUD_FOV,		0.1f,	1.0f);
 	CMD4(CCC_Float,				"fov",					&g_fov,			5.0f,	180.0f);
-#endif // DEBUG
+	//#endif // DEBUG
 
 	// Demo
-#if 1//ndef MASTER_GOLD
+	//#ifndef MASTER_GOLD
 	CMD1(CCC_DemoPlay,			"demo_play"				);
 	CMD1(CCC_DemoRecord,		"demo_record"			);
 	CMD1(CCC_DemoRecordSetPos,	"demo_set_cam_position"	);
-#endif // #ifndef MASTER_GOLD
+	//#endif // #ifndef MASTER_GOLD
 	
 #ifndef MASTER_GOLD
 	// ai
@@ -1974,17 +1976,31 @@ CMD4(CCC_Integer,			"hit_anims_tune",						&tune_hit_anims,		0, 1);
 	CMD4(CCC_Integer,			"ph_tri_clear_disable_count",	&ph_console::ph_tri_clear_disable_count	,			0,		255				);
 	CMD4(CCC_FloatBlock,		"ph_tri_query_ex_aabb_rate",	&ph_console::ph_tri_query_ex_aabb_rate	,			1.01f	,3.f			);
 	CMD3(CCC_Mask,				"g_no_clip",					&psActorFlags,	AF_NO_CLIP	);
+	CMD1(CCC_JumpToLevel, "jump_to_level");
+	CMD3(CCC_Mask, "g_god", &psActorFlags, AF_GODMODE);
+	CMD3(CCC_Mask, "g_unlimitedammo", &psActorFlags, AF_UNLIMITEDAMMO);
+	CMD1(CCC_Script, "run_script");
+	CMD1(CCC_ScriptCommand, "run_string");
+	CMD1(CCC_TimeFactor, "time_factor");
 #endif // DEBUG
 
-#ifndef MASTER_GOLD
+	/* AVO: changing restriction to -dbg key instead of DEBUG */
+	//#ifndef MASTER_GOLD
+#ifdef MASTER_GOLD
+	if (0 != strstr(Core.Params, "-dbg"))
+	{
 	CMD1(CCC_JumpToLevel,	"jump_to_level"		);
 	CMD3(CCC_Mask,			"g_god",			&psActorFlags,	AF_GODMODE	);
 	CMD3(CCC_Mask,			"g_unlimitedammo",	&psActorFlags,	AF_UNLIMITEDAMMO);
 	CMD1(CCC_Script,		"run_script");
 	CMD1(CCC_ScriptCommand,	"run_string");
 	CMD1(CCC_TimeFactor,	"time_factor");		
+		CMD1(CCC_PHGravity, "ph_gravity");
+	}
 #endif // MASTER_GOLD
+	/* AVO: end */
 
+	CMD3(CCC_Mask, "g_use_tracers", &psActorFlags, AF_USE_TRACERS);
 	CMD3(CCC_Mask,		"g_autopickup",			&psActorFlags,	AF_AUTOPICKUP);
 	CMD3(CCC_Mask,		"g_dynamic_music",		&psActorFlags,	AF_DYNAMIC_MUSIC);
 	CMD3(CCC_Mask,		"g_important_save",		&psActorFlags,	AF_IMPORTANT_SAVE);
@@ -2199,6 +2215,8 @@ extern BOOL dbg_moving_bones_snd_player;
 	
 	CMD4(CCC_Integer,	"ai_use_old_vision",	&g_ai_use_old_vision, 0, 1);
 
+	CMD4(CCC_Integer, "ai_die_in_anomaly", &g_ai_die_in_anomaly, 0, 1); //Alundaio
+
 	CMD4(CCC_Float,		"ai_aim_predict_time",	&g_aim_predict_time, 0.f, 10.f);
 
 #ifdef DEBUG
@@ -2213,9 +2231,10 @@ extern BOOL dbg_moving_bones_snd_player;
 	extern BOOL g_ai_dbg_sight;
 	CMD4(CCC_Integer,	"ai_dbg_sight",	&g_ai_dbg_sight, 0, 1);
 
+#endif // #ifdef DEBUG
+	//Alundaio: Scoped outside DEBUG
 	extern BOOL g_ai_aim_use_smooth_aim;
 	CMD4(CCC_Integer,	"ai_aim_use_smooth_aim",	&g_ai_aim_use_smooth_aim, 0, 1);
-#endif // #ifdef DEBUG
 
 	extern float g_ai_aim_min_speed;
 	CMD4(CCC_Float,	"ai_aim_min_speed",	&g_ai_aim_min_speed, 0.f, 10.f*PI );

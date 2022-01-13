@@ -175,7 +175,11 @@ public:
 			void						HitSector		(CObject* who, CObject* weapon);
 			void						HitMark			(float P, Fvector dir,			CObject* who, s16 element, Fvector position_in_bone_space, float impulse,  ALife::EHitType hit_type);
 
+//Alundaio
+#ifdef	ACTOR_FEEL_GRENADE
 			void						Feel_Grenade_Update( float rad );
+#endif
+//-Alundaio
 
 	virtual float						GetMass				() ;
 	virtual float						Radius				() const;
@@ -246,6 +250,7 @@ public:
 	void					detach_Vehicle			();
 	void					steer_Vehicle			(float angle);
 	void					attach_Vehicle			(CHolderCustom* vehicle);
+	bool					use_HolderEx			(CHolderCustom* object, bool bForce);
 
 	virtual bool			can_attach				(const CInventoryItem *inventory_item) const;
 protected:
@@ -254,7 +259,6 @@ protected:
 	bool					use_Holder				(CHolderCustom* holder);
 
 	bool					use_Vehicle				(CHolderCustom* object);
-	bool					use_MountedWeapon		(CHolderCustom* object);
 	void					ActorUse				();
 
 protected:
@@ -275,7 +279,9 @@ protected:
 
 public:
 	SActorMotions*			m_anims;
-//.	SActorVehicleAnims*		m_vehicle_anims;
+#ifdef ENABLE_CAR
+	SActorVehicleAnims*		m_vehicle_anims;
+#endif
 
 	CBlend*					m_current_legs_blend;
 	CBlend*					m_current_torso_blend;
@@ -311,9 +317,12 @@ public:
 	CActorCameraManager&	Cameras				() 	{VERIFY(m_pActorEffector); return *m_pActorEffector;}
 	IC CCameraBase*			cam_Active			()	{return cameras[cam_active];}
 	IC CCameraBase*			cam_FirstEye		()	{return cameras[eacFirstEye];}
-
+    //Swartz: actor shadow
+    IC EActorCameras active_cam() {return cam_active;} //KD: need to know which cam active outside actor methods
+	virtual	void			cam_Set(EActorCameras style); //Alundaio: made public
+    //-Swartz
 protected:
-	virtual	void			cam_Set					(EActorCameras style);
+    //virtual	void			cam_Set					(EActorCameras style);
 	void					cam_Update				(float dt, float fFOV);
 	void					cam_Lookout				( const Fmatrix &xform, float camera_height );
 	void					camUpdateLadder			(float dt);
@@ -365,8 +374,12 @@ protected:
 	//режим подбирания предметов
 	bool					m_bPickupMode;
 	//расстояние (в метрах) на котором актер чувствует гранату (любую)
+//Alundaio
+#ifdef	ACTOR_FEEL_GRENADE
 	float					m_fFeelGrenadeRadius;
 	float					m_fFeelGrenadeTime; 	//время гранаты (сек) после которого актер чувствует гранату
+#endif
+//-Alundaio
 	//расстояние подсветки предметов
 	float					m_fPickupInfoRadius;
 
@@ -390,6 +403,10 @@ public:
 	bool					CanJump					();
 	bool					CanMove					();
 	float					CameraHeight			();
+
+	// Alex ADD: for smooth crouch fix
+	float					CurrentHeight;
+
 	bool					CanSprint				();
 	bool					CanRun					();
 	void					StopAnyMove				();
@@ -406,6 +423,7 @@ protected:
 
 	BOOL					m_bJumpKeyPressed;
 
+public:
 	float					m_fWalkAccel;
 	float					m_fJumpSpeed;
 	float					m_fRunFactor;
@@ -463,7 +481,11 @@ protected:
 	float								m_fDispCrouchFactor;
 	//crouch+no acceleration
 	float								m_fDispCrouchNoAccelFactor;
-
+	Fvector								m_vMissileOffset;
+public:
+	// Получение, и запись смещения для гранат
+	Fvector								GetMissileOffset	() const;
+	void								SetMissileOffset	(const Fvector &vNewOffset);
 protected:
 	//косточки используемые при стрельбе
 	int									m_r_hand;
@@ -746,6 +768,26 @@ private:
 	bool					m_inventory_disabled;
 //static CPhysicsShell		*actor_camera_shell;
 
+			IC u32 get_state() const
+			{
+				return this->mstate_real;
+			}
+
+			IC void set_state(u32 state)
+			{
+				mstate_real = state;
+			}
+
+			IC u32 get_state_wishful() const
+			{
+				return this->mstate_wishful;
+			}
+
+			IC void set_state_wishful(u32 state)
+			{
+				mstate_wishful = state;
+			}
+      
 DECLARE_SCRIPT_REGISTER_FUNCTION
 };
 add_to_type_list(CActor)

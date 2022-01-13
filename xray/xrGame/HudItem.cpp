@@ -11,6 +11,12 @@
 #include "player_hud.h"
 #include "../xrEngine/SkeletonMotions.h"
 
+#include "../build_config_defines.h"
+#include "ui_base.h"
+
+#include "script_callback_ex.h"
+#include "script_game_object.h"
+
 CHudItem::CHudItem()
 {
 	RenderHud					(TRUE);
@@ -49,6 +55,13 @@ void CHudItem::PlaySound(LPCSTR alias, const Fvector& position)
 {
 	m_sounds.PlaySound	(alias, position, object().H_Root(), !!GetHUDmode());
 }
+
+//Alundaio: Play at index
+void CHudItem::PlaySound(LPCSTR alias, const Fvector& position, u8 index)
+{
+	m_sounds.PlaySound(alias, position, object().H_Root(), !!GetHUDmode(), false, index);
+}
+//-Alundaio
 
 void CHudItem::renderable_Render()
 {
@@ -132,6 +145,11 @@ void CHudItem::OnStateSwitch(u32 S)
 
 void CHudItem::OnAnimationEnd(u32 state)
 {
+
+	CActor* A = smart_cast<CActor*>(object().H_Parent());
+	if (A)
+		A->callback(GameObject::eActorHudAnimationEnd)(smart_cast<CGameObject*>(this)->lua_game_object(),this->hud_sect.c_str(), this->m_current_motion.c_str(), state, this->animation_slot());
+
 	switch(state)
 	{
 	case eBore:
@@ -366,10 +384,52 @@ bool CHudItem::TryPlayAnimIdle()
 				PlayAnimIdleMoving();
 				return true;
 			}
-		}
-	}
+            
+#ifdef NEW_ANIMS //AVO: new crouch idle animation
+                else if (st.bCrouch && pActor->AnyMove()) 
+                {
+                    PlayAnimCrouchIdleMoving();
+                    return true;
+                }
+#endif //-NEW_ANIMS
+        }
+    }
 	return false;
 }
+
+//AVO: check if animation exists
+bool CHudItem::HudAnimationExist(LPCSTR anim_name)
+{
+    if (HudItemData()) // First person
+    {
+        string256 anim_name_r;
+        bool is_16x9 = UI().is_widescreen();
+        u16 attach_place_idx = pSettings->r_u16(HudItemData()->m_sect_name, "attach_place_idx");
+        xr_sprintf(anim_name_r, "%s%s", anim_name, ((attach_place_idx == 1) && is_16x9) ? "_16x9" : "");
+        player_hud_motion* anm = HudItemData()->m_hand_motions.find_motion(anim_name_r);
+        if (anm)
+            return true;
+    }
+    else // Third person
+    {
+        if (g_player_hud->motion_length(anim_name, HudSection(), m_current_motion_def) > 100)
+            return true;
+
+    }
+#ifdef DEBUG
+    Msg("~ [WARNING] ------ Animation [%s] does not exist in [%s]", anim_name, HudSection().c_str());
+#endif
+    return false;
+}
+//-AVO
+
+//AVO: new crouch idle animation
+void CHudItem::PlayAnimCrouchIdleMoving()
+{
+    if (HudAnimationExist("anm_idle_moving_crouch"))
+        PlayHUDMotion("anm_idle_moving_crouch", TRUE, NULL, GetState());
+}
+//-AVO
 
 void CHudItem::PlayAnimIdleMoving()
 {

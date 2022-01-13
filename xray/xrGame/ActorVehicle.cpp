@@ -21,13 +21,21 @@
 #include "characterphysicssupport.h"
 #include "inventory.h"
 
+#include "pch_script.h"
+#include "game_object_space.h"
+#include "script_callback_ex.h"
+#include "script_game_object.h"
+
 void CActor::attach_Vehicle(CHolderCustom* vehicle)
 {
-/*
+#ifdef ENABLE_CAR
 	if(!vehicle) return;
 	if(m_holder) return;
+	CCar* car = smart_cast<CCar*>(vehicle);
+	if (!car)
+		return;
 
-	PickupModeOff		();
+	//PickupModeOff		();
 	m_holder=vehicle;
 
 	IRenderVisual *pVis = Visual();
@@ -39,7 +47,7 @@ void CActor::attach_Vehicle(CHolderCustom* vehicle)
 		return;
 	}
 	// temp play animation
-	CCar*	car						= smart_cast<CCar*>(m_holder);
+	
 	u16 anim_type					= car->DriverAnimationType();
 	SVehicleAnimCollection& anims	= m_vehicle_anims->m_vehicles_type_collections[anim_type];
 	V->PlayCycle					(anims.idles[0],FALSE);
@@ -52,10 +60,14 @@ void CActor::attach_Vehicle(CHolderCustom* vehicle)
 	mstate_wishful					= 0;
 	m_holderID=car->ID				();
 
-	SetWeaponHideState				(INV_STATE_CAR, true);
+	SetWeaponHideState(INV_STATE_BLOCK_ALL, true);
 
 	CStepManager::on_animation_start(MotionID(), 0);
-*/
+
+	//Alundaio
+	this->callback(GameObject::eAttachVehicle)(car->lua_game_object());
+	//-Alundaio
+#endif
 }
 
 void CActor::detach_Vehicle()
@@ -79,6 +91,12 @@ void CActor::detach_Vehicle()
 	//	sh->Activate();
 	car->PPhysicsShell()->SplitterHolderActivate();
 	m_holder->detach_Actor();//
+	
+	//Alundaio
+#ifdef ENABLE_CAR
+	this->callback(GameObject::eDetachVehicle)(car->lua_game_object());
+#endif
+	//-Alundaio
 
 	character_physics_support()->movement()->SetPosition(m_holder->ExitPosition());
 	character_physics_support()->movement()->SetVelocity(m_holder->ExitVelocity());
@@ -124,6 +142,16 @@ bool CActor::use_Vehicle(CHolderCustom* object)
 
 				attach_Vehicle(vehicle);
 			}
+			else
+			{
+				//Alundaio
+#ifdef ENABLE_CAR
+				CCar * car= smart_cast<CCar*>(vehicle);
+				this->callback(GameObject::eUseVehicle)(car->lua_game_object() );
+#endif
+				//-Alundaio
+			}
+
 			return true;
 		}
 		return false;

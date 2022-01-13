@@ -8,13 +8,14 @@
 #include "UIXmlInit.h"
 #include "UIHelper.h"
 #include "../string_table.h"
+#include "../Inventory_Item.h"
 
 u32 const red_clr   = color_argb(255,210,50,50);
 u32 const green_clr = color_argb(255,170,170,170);
 
 CUIArtefactParams::CUIArtefactParams()
 {
-	for ( u32 i = 0; i < ALife::infl_max_count; ++i )
+	for ( u32 i = 0; i < 9; ++i )
 	{
 		m_immunity_item[i] = NULL;
 	}
@@ -41,10 +42,11 @@ LPCSTR af_immunity_section_names[] = // ALife::EInfluenceType
 	"telepatic_immunity",		// infl_psi=3
 	"shock_immunity",			// infl_electra=4
 
-//	"strike_immunity",
-//	"wound_immunity",		
-//	"explosion_immunity",
-//	"fire_wound_immunity",
+	//Alundaio: Uncommented
+	"wound_immunity",		
+	"fire_wound_immunity",
+	"explosion_immunity",
+	"strike_immunity",
 };
 
 LPCSTR af_restore_section_names[] = // ALife::EConditionRestoreType
@@ -64,10 +66,11 @@ LPCSTR af_immunity_caption[] =  // ALife::EInfluenceType
 	"ui_inv_outfit_telepatic_protection",		// "(telepatic_imm)",
 	"ui_inv_outfit_shock_protection",			// "(shock_imm)",
 
-//	"ui_inv_outfit_strike_protection",			// "(strike_imm)",
-//	"ui_inv_outfit_wound_protection",			// "(wound_imm)",
-//	"ui_inv_outfit_explosion_protection",		// "(explosion_imm)",
-//	"ui_inv_outfit_fire_wound_protection",		// "(fire_wound_imm)",
+	//Alundaio: Uncommented
+	"ui_inv_outfit_wound_protection",			// "(wound_imm)",
+	"ui_inv_outfit_explosion_protection",		// "(explosion_imm)",
+	"ui_inv_outfit_fire_wound_protection",		// "(fire_wound_imm)",
+	"ui_inv_outfit_strike_protection",			// "(strike_imm)",
 };
 
 LPCSTR af_restore_caption[] =  // ALife::EConditionRestoreType
@@ -107,8 +110,17 @@ void CUIArtefactParams::InitFromXml( CUIXml& xml )
 	AttachChild( m_Prop_line );
 	m_Prop_line->SetAutoDelete( false );	
 	CUIXmlInit::InitStatic( xml, "prop_line", 0, m_Prop_line );
-
-	for ( u32 i = 0; i < ALife::infl_max_count; ++i )
+	
+	//Alundaio: Show AF Condition
+	m_disp_condition = xr_new<UIArtefactParamItem>();
+	m_disp_condition->Init(xml,"condition");
+	m_disp_condition->SetAutoDelete(false);
+	LPCSTR name = CStringTable().translate( "ui_inv_af_condition" ).c_str();
+	m_disp_condition->SetCaption(name);
+	xml.SetLocalRoot(base_node);
+	//-Alundaio
+	
+	for ( u32 i = 0; i < 9; ++i )
 	{
 		m_immunity_item[i] = xr_new<UIArtefactParamItem>();
 		m_immunity_item[i]->Init( xml, af_immunity_section_names[i] );
@@ -151,7 +163,7 @@ bool CUIArtefactParams::Check(const shared_str& af_section)
 	return !!pSettings->line_exist(af_section, "af_actor_properties");
 }
 
-void CUIArtefactParams::SetInfo( shared_str const& af_section )
+void CUIArtefactParams::SetInfo( CInventoryItem& pInvItem )
 {
 	DetachAll();
 	AttachChild( m_Prop_line );
@@ -161,12 +173,23 @@ void CUIArtefactParams::SetInfo( shared_str const& af_section )
 	{
 		return;
 	}
+	
+	const shared_str& af_section = pInvItem.object().cNameSect();
 
 	float val = 0.0f, max_val = 1.0f;
 	Fvector2 pos;
 	float h = m_Prop_line->GetWndPos().y+m_Prop_line->GetWndSize().y;
 
-	for ( u32 i = 0; i < ALife::infl_max_count; ++i )
+	//Alundaio: Show AF Condition
+	m_disp_condition->SetValue(pInvItem.GetCondition());
+	pos.set(m_disp_condition->GetWndPos());
+	pos.y = h;
+	m_disp_condition->SetWndPos(pos);
+	h += m_disp_condition->GetWndSize().y;
+	AttachChild(m_disp_condition);
+	//-Alundaio
+	
+	for (u32 i = 0; i < 9; ++i)
 	{
 		shared_str const& sect = pSettings->r_string( af_section, "hit_absorbation_sect" );
 		val	= pSettings->r_float( sect, af_immunity_section_names[i] );
@@ -174,6 +197,8 @@ void CUIArtefactParams::SetInfo( shared_str const& af_section )
 		{
 			continue;
 		}
+		
+		val *= pInvItem.GetCondition();
 		max_val = actor->conditions().GetZoneMaxPower( (ALife::EInfluenceType)i );
 		val /= max_val;
 		m_immunity_item[i]->SetValue( val );
@@ -190,6 +215,7 @@ void CUIArtefactParams::SetInfo( shared_str const& af_section )
 		val	= pSettings->r_float( af_section, "additional_inventory_weight" );
 		if ( !fis_zero(val) )
 		{
+			val *= pInvItem.GetCondition();
 			m_additional_weight->SetValue( val );
 
 			pos.set( m_additional_weight->GetWndPos() );
@@ -208,6 +234,7 @@ void CUIArtefactParams::SetInfo( shared_str const& af_section )
 		{
 			continue;
 		}
+		val *= pInvItem.GetCondition();
 		m_restore_item[i]->SetValue( val );
 
 		pos.set( m_restore_item[i]->GetWndPos() );

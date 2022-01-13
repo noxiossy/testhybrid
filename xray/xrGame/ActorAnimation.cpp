@@ -266,14 +266,16 @@ void SVehicleAnimCollection::Create(IKinematicsAnimated* V,u16 num)
 void CActor::steer_Vehicle(float angle)	
 {
 	if(!m_holder)		return;
-/*
+	//Alundaio: Re-enable Car
+#ifdef	ENABLE_CAR
 	CCar*	car			= smart_cast<CCar*>(m_holder);
 	u16 anim_type       = car->DriverAnimationType();
 	SVehicleAnimCollection& anims=m_vehicle_anims->m_vehicles_type_collections[anim_type];
 	if(angle==0.f) 		smart_cast<IKinematicsAnimated*>	(Visual())->PlayCycle(anims.idles[0]);
 	else if(angle>0.f)	smart_cast<IKinematicsAnimated*>	(Visual())->PlayCycle(anims.steer_right);
 	else				smart_cast<IKinematicsAnimated*>	(Visual())->PlayCycle(anims.steer_left);
-*/
+#endif
+	//-Alundaio
 }
 
 void legs_play_callback		(CBlend *blend)
@@ -288,7 +290,6 @@ void CActor::g_SetSprintAnimation( u32 mstate_rl,MotionID &head,MotionID &torso,
 	SActorSprintState& sprint			= m_anims->m_sprint;
 	
 	bool jump = (mstate_rl&mcFall)		||
-				(mstate_rl&mcLanding)	||
 				(mstate_rl&mcLanding)	||
 				(mstate_rl&mcLanding2)	||
 				(mstate_rl&mcJump)		;
@@ -381,6 +382,7 @@ void CActor::g_SetAnimation( u32 mstate_rl )
 	{
 		g_SetSprintAnimation			(mstate_rl,M_head,M_torso,M_legs);
 		moving_idx						= STorsoWpn::eSprint;
+		M_torso = ST->m_torso[4].moving[moving_idx]; //Alundaio: Fix torso animations for no weapon
 	}
 
 	if (this == Level().CurrentViewEntity())
@@ -535,6 +537,8 @@ void CActor::g_SetAnimation( u32 mstate_rl )
 				}
 			}
 		}
+		else
+			M_torso = ST->m_torso[4].moving[moving_idx]; //Alundaio: Fix torso animations for no weapon
 	}
 	MotionID		mid = smart_cast<IKinematicsAnimated*>(Visual())->ID_Cycle("norm_idle_0");
 

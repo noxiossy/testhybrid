@@ -313,6 +313,16 @@ bool CUIActorMenu::CanMoveToPartner(PIItem pItem)
 	{
 		return false;
 	}
+	
+	//Alundaio: 
+	luabind::functor<bool> funct;
+	if (ai().script_engine().functor("actor_menu_inventory.CUIActorMenu_CanMoveToPartner", funct))
+	{
+		if (funct(m_pPartnerInvOwner->cast_game_object()->lua_game_object(),pItem->object().lua_game_object(), r1, r2, itmWeight, partner_inv_weight, partner_max_weight) == false)
+			return false;
+	}
+	//-Alundaio
+	
 	return true;
 }
 
@@ -526,3 +536,28 @@ void CUIActorMenu::TransferItems( CUIDragDropListEx* pSellList, CUIDragDropListE
 	pTrade->pThis.inv_owner->set_money(    pTrade->pThis.inv_owner->get_money(),    true );
 	pTrade->pPartner.inv_owner->set_money( pTrade->pPartner.inv_owner->get_money(), true );
 }
+
+//Alundaio: Donate current item while in trade menu
+void CUIActorMenu::DonateCurrentItem(CUICellItem* cell_item)
+{
+	if (!m_partner_trade || !m_pTradePartnerList)
+		return;
+
+	CUIDragDropListEx* invlist = GetListByType(iActorBag);
+	if (!invlist->IsOwner(cell_item))
+		return;
+
+	PIItem item = (PIItem)cell_item->m_pData;
+	if (!item)
+		return;
+
+	CUICellItem* itm = invlist->RemoveItem(cell_item, false);
+
+	m_partner_trade->TransferItem(item,true,true);
+
+	m_pTradePartnerList->SetItem(itm);
+
+	SetCurrentItem(NULL);
+	UpdateItemsPlace();
+}
+//-Alundaio

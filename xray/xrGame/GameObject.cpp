@@ -275,14 +275,23 @@ BOOL CGameObject::net_Spawn		(CSE_Abstract*	DC)
 	if (E->name_replace()[0])
 		cName_set					(E->name_replace());
 	bool demo_spectator = false;
-	
+
+	//Alundaio:
 	if (Level().IsDemoPlayStarted() && E->ID == u16(-1))
 	{
 		Msg("* Spawning demo spectator ...");
 		demo_spectator = true;
 	} else {
-		R_ASSERT(Level().Objects.net_Find(E->ID) == NULL);
+		//R_ASSERT(Level().Objects.net_Find(E->ID) == NULL);
+		CObject* o = Level().Objects.net_Find(E->ID);
+		if (o != NULL)
+		{
+			Msg("ERROR: CGameObject:net_spawn() Object with ID already exists! ID=%d self=%s other=%s", E->ID, *(cName()), *(o->cName()));
+			//ai().script_engine().script_log(eLuaMessageTypeError, "CGameObject:net_Spawn() | Level().Objects.net_Find(E->ID) != NULL (This mean object already exist on level by this ID) ID=%d s_name=%s", E->ID, *(E->s_name));
+			return false;
+		}
 	}
+	//-Alundaio
 
 
 	setID							(E->ID);
@@ -511,6 +520,8 @@ void CGameObject::spawn_supplies()
 
 	for (u32 k = 0, j; spawn_ini()->r_line("spawn",k,&N,&V); k++) {
 		VERIFY				(xr_strlen(N));
+		if (pSettings->section_exist(N)) //Alundaio: Validate section exists
+		{
 		j					= 1;
 		p					= 1.f;
 		
@@ -533,6 +544,7 @@ void CGameObject::spawn_supplies()
 
 		}
 		for (u32 i=0; i<j; ++i)
+			{
 			if (::Random.randF(1.f) < p){
 				CSE_Abstract* A=Level().spawn_item	(N,Position(),ai_location().level_vertex_id(),ID(),true);
 
@@ -554,6 +566,8 @@ void CGameObject::spawn_supplies()
 				A->Spawn_Write				(P,TRUE);
 				Level().Send				(P,net_flags(TRUE));
 				F_entity_Destroy			(A);
+				}
+			}
 		}
 	}
 }

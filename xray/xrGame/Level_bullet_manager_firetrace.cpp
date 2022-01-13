@@ -36,6 +36,9 @@ extern float gCheckHitK;
 //return TRUE-тестировать объект / FALSE-пропустить объект
 BOOL CBulletManager::test_callback(const collide::ray_defs& rd, CObject* object, LPVOID params)
 {
+	if (!object)
+		return TRUE;
+
 	bullet_test_callback_data* pData	= (bullet_test_callback_data*)params;
 	SBullet* bullet = pData->pBullet;
 
@@ -44,7 +47,6 @@ BOOL CBulletManager::test_callback(const collide::ray_defs& rd, CObject* object,
 		(!bullet->flags.ricochet_was))			return FALSE;
 
 	BOOL bRes						= TRUE;
-	if (object){
 		CEntity*	entity			= smart_cast<CEntity*>(object);
 		if (entity&&entity->g_Alive()&&(entity->ID()!=bullet->parent_id)){
 			ICollisionForm*	cform	= entity->collidable.model;
@@ -137,7 +139,7 @@ BOOL CBulletManager::test_callback(const collide::ray_defs& rd, CObject* object,
 				}
 			}
 		}
-	}
+
 	
 	return bRes;
 }

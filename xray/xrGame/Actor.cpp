@@ -74,6 +74,14 @@
 #include "ActorHelmet.h"
 #include "UI/UIDragDropReferenceList.h"
 
+#include "build_config_defines.h"
+
+//Alundaio
+#include "script_hit.h"
+#include "../../xrServerEntities/script_engine.h" 
+using namespace luabind;
+//-Alundaio
+
 const u32		patch_frames	= 50;
 const float		respawn_delay	= 1.f;
 const float		respawn_auto	= 7.f;
@@ -92,7 +100,7 @@ static Fbox		bbCrouchBox;
 static Fvector	vFootCenter;
 static Fvector	vFootExt;
 
-Flags32			psActorFlags={AF_GODMODE_RT|AF_AUTOPICKUP|AF_RUN_BACKWARD|AF_IMPORTANT_SAVE};
+Flags32			psActorFlags = {AF_GODMODE_RT | AF_AUTOPICKUP | AF_RUN_BACKWARD | AF_IMPORTANT_SAVE | AF_USE_TRACERS};
 int				psActorSleepTime = 1;
 
 
@@ -104,20 +112,25 @@ CActor::CActor() : CEntityAlive(),current_ik_cam_shift(0)
 	cameras[eacFirstEye]	= xr_new<CCameraFirstEye>				(this);
 	cameras[eacFirstEye]->Load("actor_firsteye_cam");
 
-	if(strstr(Core.Params,"-psp"))
-		psActorFlags.set(AF_PSP, TRUE);
-	else
-		psActorFlags.set(AF_PSP, FALSE);
+	//Alundaio -psp always
+	/*
+    if (strstr(Core.Params, "-psp"))
+        psActorFlags.set(AF_PSP, TRUE);
+    else
+        psActorFlags.set(AF_PSP, FALSE);
+	*/
 
-	if( psActorFlags.test(AF_PSP) )
-	{
+    //if (psActorFlags.test(AF_PSP))
+    //{
 		cameras[eacLookAt]		= xr_new<CCameraLook2>				(this);
 		cameras[eacLookAt]->Load("actor_look_cam_psp");
-	}else
-	{
-		cameras[eacLookAt]		= xr_new<CCameraLook>				(this);
-		cameras[eacLookAt]->Load("actor_look_cam");
-	}
+    //}
+    //else
+    //{
+    //    cameras[eacLookAt] = xr_new<CCameraLook>(this);
+    //    cameras[eacLookAt]->Load("actor_look_cam");
+    //}
+	//-Alundaio
 	cameras[eacFreeLook]	= xr_new<CCameraLook>					(this);
 	cameras[eacFreeLook]->Load("actor_free_cam");
 	cameras[eacFixedLookAt]	= xr_new<CCameraFixedLook>				(this);
@@ -152,9 +165,13 @@ CActor::CActor() : CEntityAlive(),current_ik_cam_shift(0)
 
 	m_pPhysicsShell			=	NULL;
 
+//Alundaio
+#ifdef ACTOR_FEEL_GRENADE
 	m_fFeelGrenadeRadius	=	10.0f;
 	m_fFeelGrenadeTime      =	1.0f;
-	
+#endif
+//-Alundaio
+
 	m_holder				=	NULL;
 	m_holderID				=	u16(-1);
 
@@ -187,7 +204,11 @@ CActor::CActor() : CEntityAlive(),current_ik_cam_shift(0)
 
 
 	m_anims					= xr_new<SActorMotions>();
-//.	m_vehicle_anims			= xr_new<SActorVehicleAnims>();
+	//Alundaio: Needed for car
+#ifdef ENABLE_CAR
+    m_vehicle_anims	= xr_new<SActorVehicleAnims>();
+#endif 
+	//-Alundaio
 	m_entity_condition		= NULL;
 	m_iLastHitterID			= u16(-1);
 	m_iLastHittingWeaponID	= u16(-1);
@@ -206,6 +227,8 @@ CActor::CActor() : CEntityAlive(),current_ik_cam_shift(0)
 	m_disabled_hitmarks		= false;
 	m_inventory_disabled	= false;
 
+	// Alex ADD: for smooth crouch fix
+	CurrentHeight = 0.f;
 }
 
 
@@ -229,7 +252,11 @@ CActor::~CActor()
 	xr_delete				(m_pPhysics_support);
 
 	xr_delete				(m_anims);
-//.	xr_delete				(m_vehicle_anims);
+	//Alundaio: For car
+#ifdef ENABLE_CAR
+    xr_delete(m_vehicle_anims);
+#endif
+	//-Alundaio
 }
 
 void CActor::reinit	()
@@ -366,10 +393,13 @@ void CActor::Load	(LPCSTR section )
 
 	m_fPickupInfoRadius			= pSettings->r_float(section,"pickup_info_radius");
 
+//Alundaio
+#ifdef ACTOR_FEEL_GRENADE
 	m_fFeelGrenadeRadius		= pSettings->r_float(section,"feel_grenade_radius");
 	m_fFeelGrenadeTime			= pSettings->r_float(section,"feel_grenade_time");
 	m_fFeelGrenadeTime			*= 1000.0f;
-	
+#endif
+
 	character_physics_support()->in_Load		(section);
 	
 
@@ -400,9 +430,12 @@ if(!g_dedicated_server)
 		m_DangerSnd.create		(pSettings->r_string(section,"heavy_danger_snd"), st_Effect,SOUND_TYPE_MONSTER_INJURING);
 	}
 }
-	if( psActorFlags.test(AF_PSP) )
-		cam_Set					(eacLookAt);
-	else
+    
+	//Alundaio -psp always
+	//if (psActorFlags.test(AF_PSP))
+    //    cam_Set(eacLookAt);
+    //else
+	//-Alundaio
 		cam_Set					(eacFirstEye);
 
 	// sheduler
@@ -439,6 +472,9 @@ if(!g_dedicated_server)
 	m_sInventoryBoxUseAction		= "inventory_box_use";
 	//---------------------------------------------------------------------
 	m_sHeadShotParticle	= READ_IF_EXISTS(pSettings,r_string,section,"HeadShotParticle",0);
+
+	// Alex ADD: for smooth crouch fix
+	CurrentHeight = CameraHeight();
 }
 
 void CActor::PHHit(SHit &H)
@@ -573,8 +609,6 @@ void	CActor::Hit(SHit* pHDS)
 
 	if(IsGameTypeSingle())	
 	{
-		float hit_power				= HitArtefactsOnBelt(HDS.damage(), HDS.hit_type);
-
 		if(GodMode())
 		{
 			HDS.power				= 0.0f;
@@ -582,8 +616,42 @@ void	CActor::Hit(SHit* pHDS)
 			return;
 		}else 
 		{
+            float hit_power = HitArtefactsOnBelt(HDS.damage(), HDS.hit_type);
 			HDS.power				= hit_power;
 			HDS.add_wound			= true;
+            if (g_Alive())
+            {
+				CScriptHit tLuaHit;
+
+				tLuaHit.m_fPower = HDS.power;
+				tLuaHit.m_fImpulse = HDS.impulse;
+				tLuaHit.m_tDirection = HDS.direction();
+				tLuaHit.m_tHitType = HDS.hit_type;
+				tLuaHit.m_tpDraftsman = smart_cast<const CGameObject*>(HDS.who)->lua_game_object();
+
+				luabind::functor<bool>	funct;
+				if (ai().script_engine().functor("_G.CActor__BeforeHitCallback", funct))
+				{
+					if ( !funct(smart_cast<CGameObject*>(this->lua_game_object()), &tLuaHit, HDS.boneID) )
+						return;
+				}
+
+				HDS.power = tLuaHit.m_fPower;
+				HDS.impulse = tLuaHit.m_fImpulse;
+				HDS.dir = tLuaHit.m_tDirection;
+				HDS.hit_type = (ALife::EHitType)(tLuaHit.m_tHitType);
+				//HDS.who = smart_cast<CObject*>(tLuaHit.m_tpDraftsman->object());
+				//HDS.whoID = tLuaHit.m_tpDraftsman->ID();
+				
+                /* AVO: send script callback*/
+                callback(GameObject::eHit)(
+                    this->lua_game_object(),
+                    HDS.damage(),
+                    HDS.direction(),
+                    smart_cast<const CGameObject*>(HDS.who)->lua_game_object(),
+                    HDS.boneID
+                    );
+            }
 			inherited::Hit			(&HDS);
 		}
 	}else
@@ -809,7 +877,11 @@ void CActor::Die	(CObject* who)
 
 	if	(IsGameTypeSingle())
 	{
+#ifdef FP_DEATH
+        cam_Set(eacFirstEye);
+#else
 		cam_Set				(eacFreeLook);
+#endif // FP_DEATH
 		CurrentGameUI()->HideShownDialogs();
 		start_tutorial		("game_over");
 	} else
@@ -1162,7 +1234,10 @@ void CActor::shedule_Update	(u32 DT)
 		Center( C );
 		R = Radius();
 		feel_touch_update( C, R );
+//Alundaio
+#ifdef ACTOR_FEEL_GRENADE
 		Feel_Grenade_Update( m_fFeelGrenadeRadius );
+#endif
 
 		// Dropping
 		if (b_DropActivated)	{
@@ -1338,7 +1413,7 @@ void CActor::shedule_Update	(u32 DT)
 				}
 				else if (m_pVehicleWeLookingAt)
 				{
-					m_sDefaultObjAction = m_sCarCharacterUseAction;
+					m_sDefaultObjAction = m_pVehicleWeLookingAt->m_sUseAction == 0 ? m_sCarCharacterUseAction : m_pVehicleWeLookingAt->m_sUseAction;
 				}
 				else if (	m_pObjectWeLookingAt && 
 							m_pObjectWeLookingAt->cast_inventory_item() && 
@@ -1375,11 +1450,19 @@ void CActor::renderable_Render	()
 {
 	VERIFY(_valid(XFORM()));
 	inherited::renderable_Render			();
-	if(1/*!HUDview()*/)
-	{
+    //if(1/*!HUDview()*/) //Swartz: replaced by block below for actor shadow
+if ((cam_active==eacFirstEye && // first eye cam
+::Render->get_generation() == ::Render->GENERATION_R2 && // R2
+::Render->active_phase() == 1) // shadow map rendering on R2	
+||
+!(IsFocused() &&
+(cam_active==eacFirstEye) &&
+((!m_holder) || (m_holder && m_holder->allowWeapon() && m_holder->HUDView())))
+)  
+    //{
 		CInventoryOwner::renderable_Render	();
-	}
-	VERIFY(_valid(XFORM()));
+    //}
+    //VERIFY(_valid(XFORM()));
 }
 
 BOOL CActor::renderable_ShadowGenerate	() 
@@ -1718,18 +1801,19 @@ void CActor::UpdateArtefactsOnBeltAndOutfit()
 		CArtefact*	artefact = smart_cast<CArtefact*>(*it);
 		if(artefact)
 		{
-			conditions().ChangeBleeding		(artefact->m_fBleedingRestoreSpeed  * f_update_time);
-			conditions().ChangeHealth		(artefact->m_fHealthRestoreSpeed    * f_update_time);
-			conditions().ChangePower		(artefact->m_fPowerRestoreSpeed     * f_update_time);
-			conditions().ChangeSatiety		(artefact->m_fSatietyRestoreSpeed   * f_update_time);
-			if(artefact->m_fRadiationRestoreSpeed>0.0f) 
+			float art_cond = artefact->GetCondition();
+			conditions().ChangeBleeding((artefact->m_fBleedingRestoreSpeed*art_cond)  * f_update_time);
+			conditions().ChangeHealth((artefact->m_fHealthRestoreSpeed*art_cond)    * f_update_time);
+			conditions().ChangePower((artefact->m_fPowerRestoreSpeed*art_cond)     * f_update_time);
+			conditions().ChangeSatiety((artefact->m_fSatietyRestoreSpeed*art_cond)   * f_update_time);
+			if ((artefact->m_fRadiationRestoreSpeed*art_cond) > 0.0f)
 			{
-				float val = artefact->m_fRadiationRestoreSpeed - conditions().GetBoostRadiationImmunity();
+				float val = (artefact->m_fRadiationRestoreSpeed*art_cond) - conditions().GetBoostRadiationImmunity();
 				clamp(val, 0.0f, val);
 				conditions().ChangeRadiation(val * f_update_time);
 			}
 			else
-				conditions().ChangeRadiation(artefact->m_fRadiationRestoreSpeed	* f_update_time);
+				conditions().ChangeRadiation((artefact->m_fRadiationRestoreSpeed*art_cond)	* f_update_time);
 		}
 	}
 	CCustomOutfit* outfit = GetOutfit();
@@ -1782,7 +1866,7 @@ float CActor::GetProtection_ArtefactsOnBelt( ALife::EHitType hit_type )
 		CArtefact*	artefact = smart_cast<CArtefact*>(*it);
 		if ( artefact )
 		{
-			sum += artefact->m_ArtefactHitImmunities.AffectHit( 1.0f, hit_type );
+            sum += (artefact->m_ArtefactHitImmunities.AffectHit(1.0f, hit_type)*artefact->GetCondition());
 		}
 	}
 	return sum;
@@ -1799,6 +1883,16 @@ void	CActor::SetShotRndSeed		(s32 Seed)
 	if (0 != Seed) m_ShotRndSeed = Seed;
 	else m_ShotRndSeed = s32(Level().timeServer_Async());
 };
+
+Fvector CActor::GetMissileOffset	() const
+{
+	return m_vMissileOffset;
+}
+
+void CActor::SetMissileOffset		(const Fvector &vNewOffset)
+{
+	m_vMissileOffset.set(vNewOffset);
+}
 
 void CActor::spawn_supplies			()
 {
@@ -1945,7 +2039,7 @@ float CActor::GetRestoreSpeed( ALife::EConditionRestoreType const& type )
 			CArtefact*	artefact = smart_cast<CArtefact*>( *itb );
 			if ( artefact )
 			{
-				res += artefact->m_fHealthRestoreSpeed;
+				res += (artefact->m_fHealthRestoreSpeed*artefact->GetCondition());
 			}
 		}
 		CCustomOutfit* outfit = GetOutfit();
@@ -1964,7 +2058,7 @@ float CActor::GetRestoreSpeed( ALife::EConditionRestoreType const& type )
 			CArtefact*	artefact = smart_cast<CArtefact*>( *itb );
 			if ( artefact )
 			{
-				res += artefact->m_fRadiationRestoreSpeed;
+				res += (artefact->m_fRadiationRestoreSpeed*artefact->GetCondition());
 			}
 		}
 		CCustomOutfit* outfit = GetOutfit();
@@ -1985,7 +2079,7 @@ float CActor::GetRestoreSpeed( ALife::EConditionRestoreType const& type )
 			CArtefact*	artefact = smart_cast<CArtefact*>( *itb );
 			if ( artefact )
 			{
-				res += artefact->m_fSatietyRestoreSpeed;
+				res += (artefact->m_fSatietyRestoreSpeed*artefact->GetCondition());
 			}
 		}
 		CCustomOutfit* outfit = GetOutfit();
@@ -2006,7 +2100,7 @@ float CActor::GetRestoreSpeed( ALife::EConditionRestoreType const& type )
 			CArtefact*	artefact = smart_cast<CArtefact*>( *itb );
 			if ( artefact )
 			{
-				res += artefact->m_fPowerRestoreSpeed;
+				res += (artefact->m_fPowerRestoreSpeed*artefact->GetCondition());
 			}
 		}
 		CCustomOutfit* outfit = GetOutfit();
@@ -2031,7 +2125,7 @@ float CActor::GetRestoreSpeed( ALife::EConditionRestoreType const& type )
 			CArtefact*	artefact = smart_cast<CArtefact*>( *itb );
 			if ( artefact )
 			{
-				res += artefact->m_fBleedingRestoreSpeed;
+				res += (artefact->m_fBleedingRestoreSpeed*artefact->GetCondition());
 			}
 		}
 		CCustomOutfit* outfit = GetOutfit();

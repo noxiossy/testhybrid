@@ -442,6 +442,18 @@ bool allow_intro ()
 		return true;
 }
 
+bool allow_logo() // AVO: skip NVIDIA and other logos at load time
+{
+    if (0 != strstr(Core.Params, "-skiplogo"))
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
 void CGamePersistent::start_logo_intro()
 {
 	if(Device.dwPrecacheFrame==0)
@@ -451,8 +463,11 @@ void CGamePersistent::start_logo_intro()
 		{
 			VERIFY				(NULL==m_intro);
 			m_intro				= xr_new<CUISequencer>();
-			m_intro->Start		("intro_logo");
-			Msg					("intro_start intro_logo");
+            if (allow_logo()) // AVO: skip NVIDIA and other logos at load time
+            {
+				m_intro->Start		("intro_logo");
+				Msg					("intro_start intro_logo");
+            }
 			Console->Hide		();
 		}
 	}
