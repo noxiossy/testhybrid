@@ -95,10 +95,10 @@ endif
 TARGET_SYS?= $(HOST_SYS)
 
 ifeq (Darwin,$(TARGET_SYS))
-    INSTALL_SONAME= $(INSTALL_DYLIBNAME)
+  INSTALL_SONAME= $(INSTALL_DYLIBNAME)
   INSTALL_SOSHORT1= $(INSTALL_DYLIBSHORT1)
   INSTALL_SOSHORT2= $(INSTALL_DYLIBSHORT2)
-    LDCONFIG= :
+  LDCONFIG= :
 endif
 
 ##############################################################################
