@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../build_config_defines.h"
+#include "../../xray/build_config_defines.h"
 
 #include "../luajit/src/lua.hpp"
 
