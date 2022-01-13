@@ -12,7 +12,6 @@
 #include "xr_level_controller.h"
 #include "profiler.h"
 
-#include "lua/library_linkage.h"
 #include "luabind/library_linkage.h"
 
 extern "C" {
