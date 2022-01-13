@@ -1,4 +1,4 @@
-// Copyright (c) 2003 Daniel Wallin and Arvid Norberg
+// Copyright (c) 2004 Daniel Wallin and Arvid Norberg
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -20,16 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
 // OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef LUA_INCLUDE_HPP_INCLUDED
-#define LUA_INCLUDE_HPP_INCLUDED
+#include <luabind/class.hpp>
+#include <luabind/scope.hpp>
 
-//AVO: use luajit 2 headers (switch to Release_LuaJit_One to use old headers)
-#include "lua.hpp"
-/*extern "C" {
-	#include <lua.h>
-	#include <lauxlib.h>
-	#include <lualib.h>
-} // extern "C"
-*/
-#endif
+namespace {
+
+    struct X {};
+    struct Y {};
+    
+} // namespace unnamed
+
+luabind::scope test_separate_registration()
+{
+    using namespace luabind;
+
+    return class_<X>("X")
+               .def(constructor<>()),
+           class_<Y>("Y")
+               .def(constructor<>())
+           ;
+}
 
