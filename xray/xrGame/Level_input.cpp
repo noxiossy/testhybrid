@@ -28,7 +28,7 @@
 
 //Alundaio
 #include "pch_script.h"
-#include "script_callback_ex.h.h"
+#include "script_callback_ex.h"
 #include "../xrServerEntities/script_engine.h" 
 #include <luabind/functor.hpp>
 using namespace luabind; 
@@ -107,7 +107,7 @@ void CLevel::IR_OnMouseMove( int dx, int dy )
 	}
 }
 
-// Обработка нажатия клавиш
+// ГЋГЎГ°Г ГЎГ®ГІГЄГ  Г­Г Г¦Г ГІГЁГї ГЄГ«Г ГўГЁГё
 extern bool g_block_pause;
 
 // Lain: added TEMP!!!
