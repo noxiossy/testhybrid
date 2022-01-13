@@ -17,7 +17,7 @@
 	#define GAME_OBJECT_EXTENDED_EXPORTS					// see: script_game_object*.cpp/h
 	#define GAME_OBJECT_TESTING_EXPORTS						// see: script_game_object4.cpp  functions for object testing (ie. is_stalker(), is_heli())
 	#define NAMESPACE_LEVEL_EXPORTS							// see: level_script.cpp
-	#define INI_FILE_EXTENDED_EXPORTS						// see: script_ini_file_script.cpp
+	//#define INI_FILE_EXTENDED_EXPORTS						// see: script_ini_file_script.cpp
 	#define ENABLE_CAR										// reimplements car along with new callbacks (eOnVehicleAttached, eOnVehicleDetached) and new game_object actor methods get_attached_vehicle(), attach_vehicle() and detach_vehicle()
 //-SCRIPTS
 

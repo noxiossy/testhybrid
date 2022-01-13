@@ -24,7 +24,7 @@
 
 #include "../Include/xrRender/DebugRender.h"
 
-#include "build_config_defines.h"
+#include "../build_config_defines.h"
 
 //Alundaio
 #include "pch_script.h"
@@ -105,7 +105,7 @@ void CLevel::IR_OnMouseMove( int dx, int dy )
 	}
 }
 
-// Обработка нажатия клавиш
+// ГЋГЎГ°Г ГЎГ®ГІГЄГ  Г­Г Г¦Г ГІГЁГї ГЄГ«Г ГўГЁГё
 extern bool g_block_pause;
 
 // Lain: added TEMP!!!
