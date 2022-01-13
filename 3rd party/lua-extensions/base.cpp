@@ -1,6 +1,4 @@
-#include "../../build_config_defines.h"
-
-#pragma comment(lib, "LuaJIT-1.1.4.lib")
+#include "../../xray/build_config_defines.h"
 
 #include "../luajit/src/lua.hpp"
 
