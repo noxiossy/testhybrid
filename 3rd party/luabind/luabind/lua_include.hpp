@@ -25,7 +25,7 @@
 
 //AVO: use luajit 2 headers (switch to Release_LuaJit_One to use old headers)
 #include "lua.hpp"
-extern "C" {
+/*extern "C" {
 	#include <lua.h>
 	#include <lauxlib.h>
 	#include <lualib.h>
