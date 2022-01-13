@@ -545,6 +545,7 @@ void CUILevelMap::SendMessage(CUIWindow* pWnd, s16 msg, void* pData)
 		MapWnd()->HideHint	(pWnd);
 	}else
 	if(msg==MAP_SELECT_SPOT)
+	{
 		MapWnd()->SpotSelected	(pWnd);
 	}
 	else if (msg == MAP_SELECT_SPOT2)

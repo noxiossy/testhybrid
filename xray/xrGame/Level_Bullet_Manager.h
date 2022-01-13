@@ -93,7 +93,8 @@ public:
 										float	maximum_distance,
 										const	CCartridge& cartridge,
 										float const air_resistance_factor,
-										bool	SendHit);
+										bool	SendHit,
+										int iShotNum = 0);
 };
 
 class CLevel;
