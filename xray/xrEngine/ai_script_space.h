@@ -26,8 +26,8 @@
 }*/
 
 // Lua-bind
-#include <luabind/luabind.hpp>
-#include <luabind/object.hpp>
+#include "../../3rd party/luabind/luabind/luabind.hpp"
+#include "../../3rd party/luabind/luabind/object.hpp"
 
 #pragma warning(pop)
 
