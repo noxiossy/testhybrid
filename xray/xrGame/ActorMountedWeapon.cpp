@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#pragma hdrstop
 
 #include "actor.h"
 #include "../xrEngine/CameraBase.h"
@@ -14,6 +13,8 @@
 #include "../xrServerEntities/script_engine.h" 
 using namespace luabind; 
 #include <luabind/functor.hpp>
+
+#include "game_object_space.h"
 
 bool CActor::use_HolderEx(CHolderCustom* object, bool bForce)
 {
