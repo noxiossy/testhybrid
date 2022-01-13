@@ -14,14 +14,15 @@
 
 //#define LUABIND_NO_EXCEPTIONS
 
-extern "C" {
+#include <luabind/functor.hpp>
+/*extern "C" {
 	//#define BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION
 
 	#include <lua.h>
 	#include <lualib.h>
 	#include <lauxlib.h>
 //	#include <lua/luajit.h>
-}
+}*/
 
 // Lua-bind
 #include <luabind/luabind.hpp>

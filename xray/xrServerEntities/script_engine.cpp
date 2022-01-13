@@ -36,6 +36,9 @@
 #	endif
 #endif
 
+//AVO: lua re-org
+#include "lua.hpp"
+
 void jit_command(lua_State*, LPCSTR);
 
 #if defined(USE_DEBUGGER) && defined(USE_LUA_STUDIO)
