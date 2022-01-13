@@ -10,6 +10,10 @@
 #include "script_game_object.h"
 #include "Car.h"
 
+#include "pch_script.h"
+#include "../xrServerEntities/script_engine.h" 
+using namespace luabind; 
+
 bool CActor::use_HolderEx(CHolderCustom* object, bool bForce)
 {
 	if (m_holder)
