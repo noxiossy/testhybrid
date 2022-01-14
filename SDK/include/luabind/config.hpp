@@ -149,7 +149,7 @@ namespace std
 #ifdef LUABIND_BUILDING
 #	define LUABIND_API 		__declspec(dllexport)
 #else // #ifdef LUABIND_BUILDING
-#	define LUABIND_API		__declspec(dllimport)
+#	define LUABIND_API 		__declspec(dllimport)
 #endif // #ifdef LUABIND_BUILDING
 
 #include <luabind/luabind_memory.h>

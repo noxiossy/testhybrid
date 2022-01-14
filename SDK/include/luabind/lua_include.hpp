@@ -23,11 +23,12 @@
 #ifndef LUA_INCLUDE_HPP_INCLUDED
 #define LUA_INCLUDE_HPP_INCLUDED
 
+//AVO: use luajit 2 headers (switch to Release_LuaJit_One to use old headers)
 #include "lua.hpp"
 /*extern "C" {
-	#include <lua/lua.h>
-	#include <lua/lauxlib.h>
-	#include <lua/lualib.h>
+	#include <lua.h>
+	#include <lauxlib.h>
+	#include <lualib.h>
 } // extern "C"
 */
 #endif
