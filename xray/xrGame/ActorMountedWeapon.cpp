@@ -15,6 +15,7 @@ using namespace luabind;
 #include <luabind/functor.hpp>
 
 #include "game_object_space.h"
+#include "GameObject.h"
 
 bool CActor::use_HolderEx(CHolderCustom* object, bool bForce)
 {
