@@ -12,12 +12,12 @@
 #include "stdafx.h"
 
 //AVO: lua re-org
-#include "lua.hpp"
-/*extern "C" {
+//#include "lua.hpp"
+*extern "C" {
 	#include <lua.h>
 	#include <lualib.h>
 	#include <lauxlib.h>
-};*/
+};
 
 #pragma warning(push)
 #pragma warning(disable:4995 4297 4913)
