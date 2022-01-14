@@ -17,6 +17,7 @@ using namespace luabind;
 #include "game_object_space.h"
 #include "GameObject.h"
 
+// CALLBACK_PROBLEM
 bool CActor::use_HolderEx(CHolderCustom* object, bool bForce)
 {
 	if (m_holder)
@@ -33,8 +34,8 @@ bool CActor::use_HolderEx(CHolderCustom* object, bool bForce)
 				m_holder->detach_Actor();
 
 				CGameObject* go = smart_cast<CGameObject*>(m_holder);
-				if (go)
-					this->callback(GameObject::eDetachVehicle)(go->lua_game_object());
+				//if (go)
+				//	this->callback(GameObject::eDetachVehicle)(go->lua_game_object());
 
 				character_physics_support()->movement()->CreateCharacter();
 				m_holder = NULL;
@@ -65,8 +66,8 @@ bool CActor::use_HolderEx(CHolderCustom* object, bool bForce)
 					}
 
 					CGameObject* go = smart_cast<CGameObject*>(m_holder);
-					if (go)
-						this->callback(GameObject::eAttachVehicle)(go->lua_game_object());
+					//if (go)
+					//	this->callback(GameObject::eAttachVehicle)(go->lua_game_object());
 					return true;
 				}
 			}
