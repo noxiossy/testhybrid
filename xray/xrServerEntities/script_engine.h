@@ -15,10 +15,10 @@
 #include "script_storage.h"
 
 //AVO: lua re-org
-#include "lua.hpp"
-/*extern "C" {
+//#include "lua.hpp"
+extern "C" {
 	#include <lua.h>
-};*/
+};
 
 //#define DBG_DISABLE_SCRIPTS
 

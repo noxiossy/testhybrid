@@ -8,10 +8,10 @@
 
 #include "pch_script.h"
 //AVO: lua re-org
-#include "lua.hpp"
-/*extern "C" {
+//#include "lua.hpp"
+extern "C" {
 	#include <lua.h>
-};(*/
+};
 #include "script_engine.h"
 #include "script_thread.h"
 #include "ai_space.h"
