@@ -13,7 +13,7 @@
 
 //AVO: lua re-org
 //#include "lua.hpp"
-*extern "C" {
+extern "C" {
 	#include <lua.h>
 	#include <lualib.h>
 	#include <lauxlib.h>
