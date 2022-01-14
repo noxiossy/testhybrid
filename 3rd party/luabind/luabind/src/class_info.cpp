@@ -39,9 +39,8 @@ namespace luabind
 		detail::object_rep* obj = static_cast<detail::object_rep*>(lua_touserdata(L, -1));
 		lua_pop(L, 1);
 
-		detail::class_rep* crep = obj->crep();
-		result.name = crep->name();
-		crep->get_table(L);
+		result.name = obj->crep()->name();
+		obj->crep()->get_table(L);
 		result.methods.set();
 
 		result.attributes = newtable(L);
@@ -50,10 +49,10 @@ namespace luabind
 		
 		unsigned int index = 1;
 		
-		for (map_type::const_iterator i = crep->properties().begin();
-			i != crep->properties().end(); ++i)
+		for (map_type::const_iterator i = obj->crep()->properties().begin();
+				i != obj->crep()->properties().end(); ++i)
 		{
-			result.attributes[index++] = i->first;
+			result.attributes[index] = i->first;
 		}
 
 		return result;

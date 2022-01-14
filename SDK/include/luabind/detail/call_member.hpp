@@ -66,7 +66,7 @@ namespace luabind
 
 				~proxy_member_caller()
 				{
-					if (!L || m_called) return;
+					if (m_called) return;
 
 					m_called = true;
 
@@ -98,8 +98,6 @@ namespace luabind
 
 				operator Ret()
 				{
-					if (!L) return {};
-
 					typename default_policy::template generate_converter<Ret, lua_to_cpp>::type converter;
 
 					m_called = true;
@@ -152,8 +150,6 @@ namespace luabind
 				template<class Policies>
 				Ret operator[](const Policies& p)
 				{
-					if (!L) return {};
-
 					typedef typename find_conversion_policy<0, Policies>::type converter_policy;
 					typename converter_policy::template generate_converter<Ret, lua_to_cpp>::type converter;
 
@@ -237,7 +233,7 @@ namespace luabind
 
 				~proxy_member_void_caller()
 				{
-					if (!L || m_called) return;
+					if (m_called) return;
 
 					m_called = true;
 
@@ -270,8 +266,6 @@ namespace luabind
 				template<class Policies>
 				void operator[](const Policies& p)
 				{
-					if (!L) return;
-
 					m_called = true;
 
 					// don't count the function and self-reference
