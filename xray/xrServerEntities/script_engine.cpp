@@ -39,7 +39,7 @@
 //AVO: lua re-org
 #include "lua.hpp"
 
-void jit_command(lua_State*, LPCSTR);
+//void jit_command(lua_State*, LPCSTR);
 
 #if defined(USE_DEBUGGER) && defined(USE_LUA_STUDIO)
 static void log_callback			(LPCSTR message)
@@ -88,8 +88,9 @@ static void initialize_lua_studio	( lua_State* state, cs::lua_studio::world*& wo
 
 	s_old_log_callback				= SetLogCB(&log_callback);
 
-	jit_command						(state, "debug=2");
-	jit_command						(state, "off");
+//	jit_command						(state, "debug=2");
+//	jit_command						(state, "off");
+	luaJIT_setmode(state, 0, LUAJIT_MODE_ENGINE | LUAJIT_MODE_OFF);
 
 	world->add						(state);
 }
@@ -292,8 +293,9 @@ void CScriptEngine::init				()
 		if (!lua_studio_connected)
 			try_connect_to_debugger		();
 		else {
-			jit_command					(lua(), "debug=2");
-			jit_command					(lua(), "off");
+//			jit_command					(lua(), "debug=2");
+//			jit_command					(lua(), "off");
+            luaJIT_setmode(lua(), 0, LUAJIT_MODE_ENGINE | LUAJIT_MODE_OFF);
 			m_lua_studio_world->add		(lua());
 		}
 	}

@@ -7,15 +7,17 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #include "pch_script.h"
+#include "script_storage_space.h"
 #include "script_storage.h"
 #include "script_thread.h"
 #include <stdarg.h>
 #include "../xrCore/doug_lea_allocator.h"
 
-#ifndef DEBUG
-#	include "opt.lua.h"
-#	include "opt_inline.lua.h"
-#endif // #ifndef DEBUG
+//#ifndef DEBUG
+//#	include "opt.lua.h"
+//#	include "opt_inline.lua.h"
+//#endif // #ifndef DEBUG
+#include "lua.hpp"
 
 LPCSTR	file_header_old = "\
 local function script_name() \
@@ -164,77 +166,8 @@ void setup_luabind_allocator		()
 	luabind::allocator_parameter	= 0;
 }
 
-/* ---- start of LuaJIT extensions */
-static void l_message (lua_State* state, const char *msg) {
-	Msg	("! [LUA_JIT] %s", msg);
-}
 
-static int report (lua_State *L, int status) {
-	if (status && !lua_isnil(L, -1)) {
-		const char *msg = lua_tostring(L, -1);
-		if (msg == NULL) msg = "(error object is not a string)";
-		l_message(L, msg);
-		lua_pop(L, 1);
-	}
-	return status;
-}
 
-static int loadjitmodule (lua_State *L, const char *notfound) {
-	lua_getglobal(L, "require");
-	lua_pushliteral(L, "jit.");
-	lua_pushvalue(L, -3);
-	lua_concat(L, 2);
-	if (lua_pcall(L, 1, 1, 0)) {
-		const char *msg = lua_tostring(L, -1);
-		if (msg && !strncmp(msg, "module ", 7)) {
-			l_message(L, notfound);
-			return 1;
-		}
-		else
-			return report(L, 1);
-	}
-	lua_getfield(L, -1, "start");
-	lua_remove(L, -2);  /* drop module table */
-	return 0;
-}
-
-/* JIT engine control command: try jit library first or load add-on module */
-static int dojitcmd (lua_State *L, const char *cmd) {
-	const char *val = strchr(cmd, '=');
-	lua_pushlstring(L, cmd, val ? val - cmd : xr_strlen(cmd));
-	lua_getglobal(L, "jit");  /* get jit.* table */
-	lua_pushvalue(L, -2);
-	lua_gettable(L, -2);  /* lookup library function */
-	if (!lua_isfunction(L, -1)) {
-		lua_pop(L, 2);  /* drop non-function and jit.* table, keep module name */
-		if (loadjitmodule(L, "unknown luaJIT command"))
-			return 1;
-	}
-	else {
-		lua_remove(L, -2);  /* drop jit.* table */
-	}
-	lua_remove(L, -2);  /* drop module name */
-	if (val) lua_pushstring(L, val+1);
-	return report(L, lua_pcall(L, val ? 1 : 0, 0, 0));
-}
-
-void jit_command(lua_State* state, LPCSTR command)
-{
-	dojitcmd(state, command);
-}
-
-#ifndef DEBUG
-/* start optimizer */
-static int dojitopt (lua_State *L, const char *opt) {
-	lua_pushliteral(L, "opt");
-	if (loadjitmodule(L, "LuaJIT optimizer module not installed"))
-		return 1;
-	lua_remove(L, -2);  /* drop module name */
-	if (*opt) lua_pushstring(L, opt);
-	return report(L, lua_pcall(L, *opt ? 1 : 0, 0, 0));
-}
-/* ---- end of LuaJIT extensions */
-#endif // #ifndef DEBUG
 
 CScriptStorage::CScriptStorage		()
 {
@@ -259,19 +192,6 @@ CScriptStorage::~CScriptStorage		()
 		lua_close			(m_virtual_machine);
 }
 
-#ifndef DEBUG
-static void put_function	(lua_State* state, u8 const* buffer, u32 const buffer_size, LPCSTR package_id)
-{
-	lua_getglobal	(state, "package");
-	lua_pushstring	(state, "preload");
-	lua_gettable	(state, -2);
-
-	lua_pushstring	(state, package_id);
-	luaL_loadbuffer	(state, (char*)buffer, buffer_size, package_id );
-	lua_settable	(state, -3);
-}
-#endif // #ifndef DEBUG
-
 void CScriptStorage::reinit	()
 {
 	if (m_virtual_machine)
@@ -284,40 +204,9 @@ void CScriptStorage::reinit	()
 		return;
 	}
 
-	// initialize lua standard library functions 
-	struct luajit {
-		static void open_lib	(lua_State *L, pcstr module_name, lua_CFunction function)
-		{
-			lua_pushcfunction	(L, function);
-			lua_pushstring		(L, module_name);
-			lua_call			(L, 1, 0);
-		}
-	}; // struct lua;
-
-	luajit::open_lib	(lua(),	"",					luaopen_base);
-	luajit::open_lib	(lua(),	LUA_LOADLIBNAME,	luaopen_package);
-	luajit::open_lib	(lua(),	LUA_TABLIBNAME,		luaopen_table);
-	luajit::open_lib	(lua(),	LUA_IOLIBNAME,		luaopen_io);
-	luajit::open_lib	(lua(),	LUA_OSLIBNAME,		luaopen_os);
-	luajit::open_lib	(lua(),	LUA_MATHLIBNAME,	luaopen_math);
-	luajit::open_lib	(lua(),	LUA_STRLIBNAME,		luaopen_string);
-
-#ifdef DEBUG
-	luajit::open_lib	(lua(),	LUA_DBLIBNAME,		luaopen_debug);
-#else //!DEBUG
-
-    if (strstr(Core.Params, "-dbg"))
-        luajit::open_lib(lua(), LUA_DBLIBNAME, luaopen_debug);
-#endif // #ifdef DEBUG
-
-	if (!strstr(Core.Params,"-nojit")) {
-		luajit::open_lib(lua(),	LUA_JITLIBNAME,		luaopen_jit);
-#ifndef DEBUG
-		put_function	(lua(), opt_lua_binary, sizeof(opt_lua_binary), "jit.opt");
-		put_function	(lua(), opt_inline_lua_binary, sizeof(opt_lua_binary), "jit.opt_inline");
-		dojitopt		(lua(), "2");
-#endif // #ifndef DEBUG
-	}
+    luaL_openlibs(lua());
+    if (strstr(Core.Params, "-nojit"))
+        luaJIT_setmode(lua(), 0, LUAJIT_MODE_ENGINE | LUAJIT_MODE_OFF);
 
 	if (strstr(Core.Params,"-_g"))
 		file_header			= file_header_new;

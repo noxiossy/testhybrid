@@ -238,7 +238,7 @@ void CScriptEngine::script_register(lua_State *L)
         def("time_global_async", &script_time_global_async),
 #ifdef XRGAME_EXPORTS
         def("device", &get_device),
-        def("is_enough_addres*=s_space_available", &is_enough_address_space_available_impl),
+        def("is_enough_address_space_available", &is_enough_address_space_available_impl),
 #endif //-XRGAME_EXPORTS
 		class_<profile_timer_script>("profile_timer")
 			.def(constructor<>())
