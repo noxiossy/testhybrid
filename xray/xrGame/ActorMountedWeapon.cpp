@@ -33,7 +33,7 @@ bool CActor::use_HolderEx(CHolderCustom* object, bool bForce)
 			if (!object || (m_holder == object)){
 				m_holder->detach_Actor();
 
-				CGameObject* go = smart_cast<CGameObject*>(m_holder);
+				//CGameObject* go = smart_cast<CGameObject*>(m_holder);
 				//if (go)
 				//	this->callback(GameObject::eDetachVehicle)(go->lua_game_object());
 
@@ -65,7 +65,7 @@ bool CActor::use_HolderEx(CHolderCustom* object, bool bForce)
 						pCamBobbing = NULL;
 					}
 
-					CGameObject* go = smart_cast<CGameObject*>(m_holder);
+					//CGameObject* go = smart_cast<CGameObject*>(m_holder);
 					//if (go)
 					//	this->callback(GameObject::eAttachVehicle)(go->lua_game_object());
 					return true;
